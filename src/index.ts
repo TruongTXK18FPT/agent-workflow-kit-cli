@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * @license
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: MIT
  */
 
 import { runCli } from "./cli/index.js";
