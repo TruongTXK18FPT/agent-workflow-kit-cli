@@ -8,6 +8,18 @@
   <strong>A Repo-First AI Workflow Generator & Guideline Optimizer for Codex and Antigravity</strong>
 </p>
 
+<p align="center" style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+  <span>Designed & Optimized for:</span>
+  <br />
+  <a href="https://github.com/TruongTXK18FPT/agent-workflow-kit-cli" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: bold; color: #fff;">
+    <img src="src/assets/Codex.png" alt="Codex Logo" width="24" style="vertical-align: middle; border-radius: 4px;" /> Codex
+  </a>
+  <span style="color: #4b5563;">|</span>
+  <a href="https://github.com/TruongTXK18FPT/agent-workflow-kit-cli" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: bold; color: #fff;">
+    <img src="src/assets/Antigravity.webp" alt="Antigravity Logo" width="24" style="vertical-align: middle; border-radius: 4px;" /> Antigravity
+  </a>
+</p>
+
 <p align="center">
   <a href="https://github.com/TruongTXK18FPT/agent-workflow-kit-cli">
     <img src="https://img.shields.io/github/license/TruongTXK18FPT/agent-workflow-kit-cli?style=for-the-badge&color=blue" alt="License" />
