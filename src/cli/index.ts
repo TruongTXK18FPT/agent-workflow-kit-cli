@@ -8,6 +8,7 @@ import chalk from "chalk";
 import { runInit } from "./commands/init.js";
 import { runSync } from "./commands/sync.js";
 import { runDoctor } from "./commands/doctor.js";
+import { runExport } from "./commands/export.js";
 
 const program = new Command();
 
@@ -48,11 +49,25 @@ export function runCli() {
   program
     .command("doctor")
     .description("Verify active agent configurations, environment, and run validation tests")
-    .action(async () => {
+    .option("--install-hook", "Install a git pre-commit hook to automatically run doctor checks", false)
+    .action(async (options) => {
       try {
-        await runDoctor();
+        await runDoctor(options);
       } catch (err) {
         console.error(chalk.red(`Error running doctor: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  program
+    .command("export <target>")
+    .description("Export custom workflows/skills for the target agent (e.g., 'antigravity')")
+    .option("--no-clipboard", "Do not copy the exported instructions to clipboard", false)
+    .action(async (target, options) => {
+      try {
+        await runExport(target, { clipboard: options.clipboard });
+      } catch (err) {
+        console.error(chalk.red(`Error running export: ${err instanceof Error ? err.message : String(err)}`));
         process.exit(1);
       }
     });

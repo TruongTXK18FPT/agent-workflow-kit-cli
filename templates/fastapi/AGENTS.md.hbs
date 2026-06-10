@@ -1,0 +1,28 @@
+## 🐍 Python FastAPI Guidelines
+
+### 🏗️ Architecture & Router-Service-Repository Conventions
+Follow a clean layering architecture. Separate HTTP routing, business logic, and database operations:
+
+```text
+app/
+  core/           # Config, database setup
+  models/         # SQLAlchemy or SQLModel entities
+  schemas/        # Pydantic validation models
+  crud/           # Database repositories/CRUD operations
+  services/       # Business logic layer
+  api/            # Route controllers
+    v1/
+      endpoints/  # API Routers
+```
+
+### ⚙️ Coding Guidelines
+- **Dependency Injection:** Use FastAPI's `Depends` explicitly for injecting database sessions, security credentials, and custom services.
+- **Strict Typing:** Always annotate function arguments and return types. Use Pydantic's `response_model` or type hints to enforce validation.
+- **Asynchronous Handlers:** Prefer `async def` for I/O bound endpoints.
+
+### 🧪 Testing & Verification
+Before completing a task, run the following verification pipeline locally:
+```bash
+ruff check .
+pytest
+```

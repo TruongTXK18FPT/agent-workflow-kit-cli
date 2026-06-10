@@ -1,0 +1,48 @@
+# Repository Agent Guidelines
+
+This repository implements the `agent-workflow-kit-cli` configuration standards for AI coding agents.
+
+---
+
+## 🚀 AI Agent Step-by-Step Execution Workflow
+
+AI agents MUST follow this strict 5-step workflow for any task:
+
+### 1. 🔍 Step 1: Research & Context Analysis
+- Read existing codebase files relating to the task first.
+- Understand local naming patterns, directory boundaries, and dependency versions.
+- Do NOT make any code modifications or run build commands in this step.
+
+### 2. 📝 Step 2: Formulate Implementation Plan
+- Document your proposed design approach.
+- List all files to be created (`[NEW]`), modified (`[MODIFY]`), or deleted (`[DELETE]`).
+- Identify all verification commands to run.
+- Wait for user feedback or proceed intentionally based on user preferences.
+
+### 3. 💻 Step 3: Implementation & Clean Coding
+- Implement changes following strict type safety standards.
+- Conform strictly to the folder structures and layers defined in the Stack Pack section below.
+- Preserve existing comments, docstrings, and licensing headers.
+
+### 4. 🧪 Step 4: Verification & Conformance Testing
+- Always run automated verification commands of the detected stack pack (e.g. compile, lint, test, build).
+- If tests or builds fail, fix the errors and rerun until compile/tests are 100% clean.
+
+### 5. 🔍 Step 5: Self-Review & Quality Assurance
+- Review your diff/changes carefully to check for syntax errors, leftover console logs, or redundant imports.
+- Summarize what was changed, what was tested, and confirm that all steps are complete before marking the task as done.
+
+---
+
+## ⚙️ General Engineering Conventions
+- Follow existing patterns in naming, architecture, and layouts.
+- Read files carefully before proposing code updates.
+- Ensure type safety and run clean lint/verify steps before declaring a task as done.
+
+<!-- AWK-START: STACK_PACK -->
+### 📦 Monorepo Multi-Module Project Structure
+
+This repository is configured as a monorepo. Please load and follow the stack-specific guidelines in each subdirectory:
+
+- **scratch_test** (spring-boot): Stack rules and guidelines are located at [scratch_test/AGENTS.md](file:///D:/WorkSpace/AgentWorkflowKitProject/agent-workflow-kit-cli/scratch_test/AGENTS.md)
+<!-- AWK-END: STACK_PACK -->
