@@ -1,0 +1,47 @@
+## React + TypeScript Guidelines
+
+### Architecture & Feature Conventions
+Use a feature-first structure. Keep route wiring thin, and place feature UI, hooks, data clients, and types together:
+
+```text
+src/
+  app/                  # App shell, router, providers
+  features/
+    billing/
+      components/
+        BillingPanel.tsx
+      hooks/
+        useBilling.ts
+      services/
+        billingClient.ts
+      types.ts
+      index.ts
+  shared/
+    components/
+    hooks/
+    utils/
+```
+
+### Component, Hook, and State Rules
+- Components render UI and delegate fetching, subscriptions, timers, and other side effects to custom hooks.
+- Custom hooks own reusable stateful logic and must start with `use`.
+- Prefer local component state for isolated interactions.
+- Use Context API for low-frequency cross-tree state such as theme, auth session, or app configuration.
+- Use Zustand only for shared state with frequent updates or cross-feature coordination.
+- Keep feature state close to the feature before moving it to `shared/`.
+
+### TypeScript Standards
+- Use strict TypeScript. Avoid `any`; prefer explicit domain types and discriminated unions.
+- Define feature-local interfaces and types near the code that owns them.
+- Export from feature `index.ts` files only when another module needs the API.
+- Use absolute imports from `@/`; do not add deep relative imports like `../../`.
+
+### Testing & Verification
+Before completing a React + TypeScript change, run the project validation pipeline:
+
+```bash
+npm run lint
+npm run typecheck
+npm run test -- --run
+npm run build
+```

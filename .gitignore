@@ -3,3 +3,8 @@ dist/
 *.tgz
 .env
 .DS_Store
+.agents/
+coverage/
+scratch_test/
+awk-test-*/
+tests/
