@@ -162,27 +162,75 @@ packages = ["src"]
 
 ---
 
-## 🛠️ CLI Reference
+## 🚀 Quick Start
 
-Install and initialize the toolkit instantly inside any project workspace using `npx`:
+Initialize the toolkit instantly inside your project repository using `npx` (no local installation required):
 
 ```bash
-npx agent-workflow-kit-cli init [options]
+# 1. Initialize rules and custom skills for the project
+npx agent-workflow-kit-cli init
+
+# 2. View the generated AGENTS.md guidelines at your repository root
+cat AGENTS.md
+
+# 3. Export custom skills to register them with Antigravity
+npx agent-workflow-kit-cli export antigravity
+
+# 4. Enable pre-commit auto-validation hook
+npx agent-workflow-kit-cli doctor --install-hook
 ```
 
-### Emitters Options Table
+---
 
-| Option | Values | Default | Description |
-|---|---|---|---|
-| `--stack` | `auto`, `spring-boot`, `react-ts`, `fastapi` | `auto` | Choose target framework or let the detector auto-resolve. |
-| `--agent` | `both`, `codex`, `antigravity` | `both` | Target agent formatting profiles. |
-| `--dry-run` | Boolean | `false` | Outputs the plan to safe console output without writing files. |
+## 🛠️ CLI Reference
 
-### Command Commands Suite
+You can run `agent-workflow-kit-cli` directly via `npx` or install it locally:
 
-- **`init`**: Analyzes the directory and bootstraps workflow rules.
-- **`sync`**: Re-evaluates configuration manifests and updates generated documentation segments without touching user modifications.
-- **`doctor`**: Checks consistency of active configurations, formatting states, and verification command integrity.
+```bash
+npx agent-workflow-kit-cli <command> [options]
+```
+
+### 1. `init`
+Analyzes the directory manifests (`package.json`, `pom.xml`, `pyproject.toml`) and bootstraps agent guidelines (`AGENTS.md`) and custom skills (`.agents/`).
+
+* **Usage:** `npx agent-workflow-kit-cli init [options]`
+* **Options:**
+  * `--stack <stack>`: Specify the target project stack.
+    * Values: `auto`, `spring-boot`, `react-ts`, `fastapi`
+    * Default: `auto` (auto-detects project manifests)
+  * `--agent <agent>`: Target profile settings.
+    * Values: `both`, `codex`, `antigravity`
+    * Default: `both`
+  * `--dry-run`: Run the command in simulation mode. Logs actions to the console without writing any files to disk.
+
+---
+
+### 2. `sync`
+Re-evaluates the manifests and updates existing guidelines/skills inside the workspace without touching user modifications. It writes changes inside the `<!-- AWK-START: <id> -->` managed blocks.
+
+* **Usage:** `npx agent-workflow-kit-cli sync [options]`
+* **Options:**
+  * `--dry-run`: Simulation mode. Logs planned sync modifications to the console without updating files.
+
+---
+
+### 3. `doctor`
+Checks consistency of active agent configurations, environment setups, and executes the validation test commands configured for detected stacks.
+
+* **Usage:** `npx agent-workflow-kit-cli doctor [options]`
+* **Options:**
+  * `--install-hook`: Installs a local Git `pre-commit` hook to automatically trigger `doctor` checks before commit validation. If the checks fail, the commit is aborted.
+
+---
+
+### 4. `export <target>`
+Exports and bundles custom workflows and skills in `.agents/skills/` into a single consolidated string optimized for the target AI agent console.
+
+* **Usage:** `npx agent-workflow-kit-cli export <target> [options]`
+* **Arguments:**
+  * `<target>`: The name of the target agent (e.g., `antigravity`).
+* **Options:**
+  * `--no-clipboard`: Prevents the CLI from copying the bundled instructions directly to the system clipboard (by default, it will attempt to copy to the clipboard first, fallback to printing on stdout).
 
 ---
 

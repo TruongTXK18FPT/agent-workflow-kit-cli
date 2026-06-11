@@ -11,7 +11,6 @@ interface SyncOptions {
 }
 
 export async function runSync(options: SyncOptions) {
-  console.log(chalk.blue("Syncing agent guidelines and skills..."));
   await runInit({
     stack: "auto",
     agent: "both",

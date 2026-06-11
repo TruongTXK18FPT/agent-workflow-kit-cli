@@ -28,12 +28,31 @@ interface InitOptions {
   dryRun: boolean;
 }
 
+function printSuccessAndNextSteps(options: InitOptions) {
+  console.log(chalk.bold.green("\n🎉 Initialization completed successfully!"));
+
+  if (!options.dryRun) {
+    console.log(chalk.bold.cyan("\n👉 Next Steps:"));
+    console.log(chalk.dim("------------------------------------------"));
+    console.log(chalk.white(`1. Open & review the generated guidelines:`));
+    console.log(chalk.gray(`   - Root: ${chalk.underline("AGENTS.md")}`));
+    console.log(chalk.gray(`   - Stack rules: ${chalk.underline(".agents/rules/")}`));
+    console.log(chalk.white(`2. Setup automatic git pre-commit hook validation:`));
+    console.log(chalk.cyan(`   run: npx agent-workflow-kit-cli doctor --install-hook`));
+    console.log(chalk.white(`3. Export custom skills to register with your AI agent (e.g. Antigravity):`));
+    console.log(chalk.cyan(`   run: npx agent-workflow-kit-cli export antigravity`));
+    console.log(chalk.dim("------------------------------------------\n"));
+  }
+}
+
 export async function runInit(options: InitOptions) {
   const cwd = process.cwd();
-  console.log(chalk.blue("Initializing agent-workflow-kit..."));
-  console.log(chalk.gray(`- Stack Selection: ${options.stack}`));
-  console.log(chalk.gray(`- Agent Profile: ${options.agent}`));
-  console.log(chalk.gray(`- Dry Run: ${options.dryRun}\n`));
+  console.log(chalk.bold.cyan("\n🚀 Agent Workflow Kit - Initializing..."));
+  console.log(chalk.dim("------------------------------------------"));
+  console.log(`${chalk.bold("Stack Selection:")} ${chalk.green(options.stack)}`);
+  console.log(`${chalk.bold("Agent Profile:")}   ${chalk.green(options.agent)}`);
+  console.log(`${chalk.bold("Dry Run:")}         ${options.dryRun ? chalk.yellow("Enabled 🧪") : chalk.gray("Disabled")}`);
+  console.log(chalk.dim("------------------------------------------\n"));
 
   let modules;
   if (options.stack !== "auto") {
@@ -58,6 +77,7 @@ export async function runInit(options: InitOptions) {
       await fs.writeFile(agentsPath, finalAgentsContent, "utf8");
       console.log(chalk.green("✔️ Created root AGENTS.md with general guidelines."));
     }
+    printSuccessAndNextSteps(options);
     return;
   }
 
@@ -209,5 +229,5 @@ export async function runInit(options: InitOptions) {
     }
   }
 
-  console.log(chalk.bold.green("\n🎉 Initialization completed successfully!"));
+  printSuccessAndNextSteps(options);
 }
