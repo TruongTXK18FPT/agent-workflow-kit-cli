@@ -2,8 +2,15 @@ name: Release Package
 
 on:
   push:
+    branches:
+      - main
+      - master
     tags:
       - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
 
 jobs:
   test:
@@ -29,6 +36,7 @@ jobs:
 
   publish:
     needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
