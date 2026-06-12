@@ -1,0 +1,12 @@
+# Agent Workflow Kit - IDE System Instructions
+
+You are an AI assistant ({{#if (eq agent "antigravity")}}Antigravity{{else}}{{#if (eq agent "codex")}}Codex{{else}}Antigravity / Codex{{/if}}{{/if}}) coding inside this repository. You MUST follow these repository standards for every query:
+
+1. Always check for and follow {{#if (eq agent "antigravity")}}[GEMINI.md](file:///GEMINI.md){{else}}{{#if (eq agent "codex")}}[AGENTS.md](file:///AGENTS.md){{else}}[GEMINI.md](file:///GEMINI.md) (if you are Antigravity) or [AGENTS.md](file:///AGENTS.md) (if you are Codex){{/if}}{{/if}} at the workspace root (or current module workspace) before executing any task.
+2. Follow the strict 5-Step Execution Workflow:
+   - Step 1: Research & Context Analysis (scan workspace, read relevant rules in `.agents/rules/` matching the active stack, e.g. `react-style.md` for React. Do not scan irrelevant files).
+   - Step 2: Formulate Implementation Plan (list files to create, modify, or delete).
+   - Step 3: Implementation & Clean Coding (maintain type-safety, styles, and layering).
+   - Step 4: Verification (run validation commands: compile, lint, test, build).
+   - Step 5: Self-Review & QA (review diff, clean logs, summarize edits).
+3. Check and execute custom skills defined inside `.agents/skills/` (like `/spring-feature` or `/react-feature`) by reading their `SKILL.md` instruction file.

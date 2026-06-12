@@ -36,7 +36,8 @@ function printSuccessAndNextSteps(options: InitOptions) {
     console.log(chalk.bold.cyan("\n👉 Next Steps:"));
     console.log(chalk.dim("------------------------------------------"));
     console.log(chalk.white(`1. Open & review the generated guidelines:`));
-    console.log(chalk.gray(`   - Root: ${chalk.underline("AGENTS.md")}`));
+    const targetFile = options.agent === "antigravity" ? "GEMINI.md" : "AGENTS.md";
+    console.log(chalk.gray(`   - Root: ${chalk.underline(targetFile)}`));
     console.log(chalk.gray(`   - Stack rules: ${chalk.underline(".agents/rules/")}`));
     console.log(chalk.white(`2. Setup automatic git pre-commit hook validation:`));
     console.log(chalk.cyan(`   npx agent-workflow-kit-cli doctor --install-hook`));
@@ -44,6 +45,62 @@ function printSuccessAndNextSteps(options: InitOptions) {
     console.log(chalk.cyan(`   npx agent-workflow-kit-cli export antigravity`));
     console.log(chalk.dim("------------------------------------------\n"));
   }
+}
+
+export async function updateGitignore(targetDir: string, dryRun: boolean) {
+  const gitignorePath = path.join(targetDir, ".gitignore");
+  const rulesToIgnore = [".cursorrules", ".copilot-instructions.md", ".clinerules"];
+  if (dryRun) {
+    console.log(chalk.gray(`[Dry Run] Would update .gitignore in ${targetDir} to exclude IDE rule files.`));
+    return;
+  }
+  try {
+    let content = "";
+    try {
+      content = await fs.readFile(gitignorePath, "utf8");
+    } catch {
+      // gitignore does not exist
+    }
+
+    const lines = content.split("\n").map((l) => l.trim());
+    const missingRules = rulesToIgnore.filter((rule) => !lines.includes(rule));
+
+    if (missingRules.length > 0) {
+      const separator = content.length > 0 && !content.endsWith("\n") ? "\n\n" : "";
+      const newContent =
+        content +
+        separator +
+        "# Agent Workflow Kit IDE rules\n" +
+        missingRules.join("\n") +
+        "\n";
+      await fs.writeFile(gitignorePath, newContent, "utf8");
+      console.log(chalk.green("✔️ Updated .gitignore to exclude IDE rules."));
+    }
+  } catch (err) {
+    console.warn(
+      chalk.yellow(
+        `Could not update .gitignore: ${err instanceof Error ? err.message : String(err)}`
+      )
+    );
+  }
+}
+
+async function writeWorkspaceIdeRulesAndGitignore(cwd: string, options: InitOptions) {
+  const ideRulesContent = await renderTemplate("common/ide-rules.hbs", {
+    agent: options.agent,
+  });
+  const ideFiles = [".cursorrules", ".copilot-instructions.md", ".clinerules"];
+  for (const file of ideFiles) {
+    if (options.dryRun) {
+      console.log(chalk.gray(`[Dry Run] Would write root ${file}`));
+    } else {
+      await fs.writeFile(path.join(cwd, file), ideRulesContent, "utf8");
+    }
+  }
+  if (!options.dryRun) {
+    console.log(chalk.green("✔️ Created workspace IDE prompt anchors (.cursorrules, .copilot-instructions.md, .clinerules)"));
+  }
+  await updateGitignore(cwd, options.dryRun);
 }
 
 export async function runInit(options: InitOptions) {
@@ -71,13 +128,27 @@ export async function runInit(options: InitOptions) {
     const finalAgentsContent = await renderTemplate("common/AGENTS.md.hbs", {
       stackContent: "",
     });
-    if (options.dryRun) {
-      console.log(chalk.gray(`[Dry Run] Would write root AGENTS.md`));
-    } else {
-      const agentsPath = path.join(cwd, "AGENTS.md");
-      await fs.writeFile(agentsPath, finalAgentsContent, "utf8");
-      console.log(chalk.green("✔️ Created root AGENTS.md with general guidelines."));
+
+    if (options.agent === "antigravity" || options.agent === "both") {
+      if (options.dryRun) {
+        console.log(chalk.gray(`[Dry Run] Would write root GEMINI.md`));
+      } else {
+        const geminiPath = path.join(cwd, "GEMINI.md");
+        await fs.writeFile(geminiPath, finalAgentsContent, "utf8");
+        console.log(chalk.green("✔️ Created root GEMINI.md with general guidelines."));
+      }
     }
+    if (options.agent === "codex" || options.agent === "both") {
+      if (options.dryRun) {
+        console.log(chalk.gray(`[Dry Run] Would write root AGENTS.md`));
+      } else {
+        const agentsPath = path.join(cwd, "AGENTS.md");
+        await fs.writeFile(agentsPath, finalAgentsContent, "utf8");
+        console.log(chalk.green("✔️ Created root AGENTS.md with general guidelines."));
+      }
+    }
+
+    await writeWorkspaceIdeRulesAndGitignore(cwd, options);
     printSuccessAndNextSteps(options);
     return;
   }
@@ -85,37 +156,66 @@ export async function runInit(options: InitOptions) {
   const isMonorepo =
     modules.length > 1 || (modules.length === 1 && modules[0].name !== ".");
 
-  // Write root AGENTS.md with monorepo details
+  // Write root files with monorepo details
   if (isMonorepo) {
     let monorepoContent =
       "### 📦 Monorepo Multi-Module Project Structure\n\nThis repository is configured as a monorepo. Please load and follow the stack-specific guidelines in each subdirectory:\n\n";
     for (const mod of modules) {
-      monorepoContent += `- **${mod.name}** (${mod.stacks.join(", ")}): Stack rules and guidelines are located at [${mod.name}/AGENTS.md](file:///${mod.dir.replace(/\\/g, "/")}/AGENTS.md)\n`;
+      const isAntigravity = options.agent === "antigravity";
+      const targetFileName = isAntigravity ? "GEMINI.md" : "AGENTS.md";
+      monorepoContent += `- **${mod.name}** (${mod.stacks.join(", ")}): Stack rules and guidelines are located at [${mod.name}/${targetFileName}](file:///${mod.dir.replace(/\\/g, "/")}/${targetFileName})\n`;
     }
 
     const rootAgentsContent = await renderTemplate("common/AGENTS.md.hbs", {
       stackContent: monorepoContent.trim(),
     });
 
+    const rootGeminiPath = path.join(cwd, "GEMINI.md");
     const rootAgentsPath = path.join(cwd, "AGENTS.md");
-    if (options.dryRun) {
-      console.log(
-        chalk.gray(
-          `[Dry Run] Would write root AGENTS.md containing monorepo navigation:\n${monorepoContent}`
-        )
-      );
-    } else {
-      try {
-        await fs.access(rootAgentsPath);
-        await updateFileWithBlock(
-          rootAgentsPath,
-          "STACK_PACK",
-          monorepoContent.trim()
+
+    if (options.agent === "antigravity" || options.agent === "both") {
+      if (options.dryRun) {
+        console.log(
+          chalk.gray(
+            `[Dry Run] Would write root GEMINI.md containing monorepo navigation:\n${monorepoContent}`
+          )
         );
-        console.log(chalk.green("✔️ Updated STACK_PACK block in root AGENTS.md."));
-      } catch {
-        await fs.writeFile(rootAgentsPath, rootAgentsContent, "utf8");
-        console.log(chalk.green("✔️ Created root AGENTS.md for monorepo."));
+      } else {
+        try {
+          await fs.access(rootGeminiPath);
+          await updateFileWithBlock(
+            rootGeminiPath,
+            "STACK_PACK",
+            monorepoContent.trim()
+          );
+          console.log(chalk.green("✔️ Updated STACK_PACK block in root GEMINI.md."));
+        } catch {
+          await fs.writeFile(rootGeminiPath, rootAgentsContent, "utf8");
+          console.log(chalk.green("✔️ Created root GEMINI.md for monorepo."));
+        }
+      }
+    }
+
+    if (options.agent === "codex" || options.agent === "both") {
+      if (options.dryRun) {
+        console.log(
+          chalk.gray(
+            `[Dry Run] Would write root AGENTS.md containing monorepo navigation:\n${monorepoContent}`
+          )
+        );
+      } else {
+        try {
+          await fs.access(rootAgentsPath);
+          await updateFileWithBlock(
+            rootAgentsPath,
+            "STACK_PACK",
+            monorepoContent.trim()
+          );
+          console.log(chalk.green("✔️ Updated STACK_PACK block in root AGENTS.md."));
+        } catch {
+          await fs.writeFile(rootAgentsPath, rootAgentsContent, "utf8");
+          console.log(chalk.green("✔️ Created root AGENTS.md for monorepo."));
+        }
       }
     }
   }
@@ -147,24 +247,44 @@ export async function runInit(options: InitOptions) {
 
     stackContent = stackContent.trim();
 
-    // Render AGENTS.md for this module
+    // Render agent files for this module
+    const geminiPath = path.join(mod.dir, "GEMINI.md");
     const agentsPath = path.join(mod.dir, "AGENTS.md");
     const moduleAgentsContent = await renderTemplate("common/AGENTS.md.hbs", {
       stackContent,
     });
 
-    if (options.dryRun) {
-      console.log(chalk.gray(`[Dry Run] Would write AGENTS.md at ${agentsPath}`));
-    } else {
-      try {
-        await fs.access(agentsPath);
-        await updateFileWithBlock(agentsPath, "STACK_PACK", stackContent);
-        console.log(
-          chalk.green(`✔️ Updated STACK_PACK block in ${mod.name}/AGENTS.md`)
-        );
-      } catch {
-        await fs.writeFile(agentsPath, moduleAgentsContent, "utf8");
-        console.log(chalk.green(`✔️ Created ${mod.name}/AGENTS.md`));
+    if (options.agent === "antigravity" || options.agent === "both") {
+      if (options.dryRun) {
+        console.log(chalk.gray(`[Dry Run] Would write GEMINI.md at ${geminiPath}`));
+      } else {
+        try {
+          await fs.access(geminiPath);
+          await updateFileWithBlock(geminiPath, "STACK_PACK", stackContent);
+          console.log(
+            chalk.green(`✔️ Updated STACK_PACK block in ${mod.name}/GEMINI.md`)
+          );
+        } catch {
+          await fs.writeFile(geminiPath, moduleAgentsContent, "utf8");
+          console.log(chalk.green(`✔️ Created ${mod.name}/GEMINI.md`));
+        }
+      }
+    }
+
+    if (options.agent === "codex" || options.agent === "both") {
+      if (options.dryRun) {
+        console.log(chalk.gray(`[Dry Run] Would write AGENTS.md at ${agentsPath}`));
+      } else {
+        try {
+          await fs.access(agentsPath);
+          await updateFileWithBlock(agentsPath, "STACK_PACK", stackContent);
+          console.log(
+            chalk.green(`✔️ Updated STACK_PACK block in ${mod.name}/AGENTS.md`)
+          );
+        } catch {
+          await fs.writeFile(agentsPath, moduleAgentsContent, "utf8");
+          console.log(chalk.green(`✔️ Created ${mod.name}/AGENTS.md`));
+        }
       }
     }
 
@@ -264,6 +384,9 @@ export async function runInit(options: InitOptions) {
       }
     }
   }
+
+  // Write workspace-level IDE rules and update gitignore
+  await writeWorkspaceIdeRulesAndGitignore(cwd, options);
 
   printSuccessAndNextSteps(options);
 }

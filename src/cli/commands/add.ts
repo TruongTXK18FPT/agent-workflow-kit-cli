@@ -17,6 +17,7 @@ import {
   writeRuleWithChunking,
 } from "../../core/emitter.js";
 import { analyzeModule } from "../../core/analyzer.js";
+import { updateGitignore } from "./init.js";
 
 interface AddOptions {
   path: string;
@@ -63,25 +64,61 @@ export async function runAdd(stack: string, options: AddOptions) {
     process.exit(1);
   }
 
-  // 3. Write or Update AGENTS.md in the target directory
+  // 3. Write or Update AGENTS.md and/or GEMINI.md in the target directory
+  const geminiPath = path.join(targetDir, "GEMINI.md");
   const agentsPath = path.join(targetDir, "AGENTS.md");
   const moduleAgentsContent = await renderTemplate("common/AGENTS.md.hbs", {
     stackContent,
   });
 
-  if (options.dryRun) {
-    console.log(chalk.gray(`[Dry Run] Would write/update AGENTS.md at ${agentsPath}`));
-  } else {
-    try {
-      await fs.access(agentsPath);
-      await updateFileWithBlock(agentsPath, "STACK_PACK", stackContent);
-      console.log(chalk.green(`✔️ Updated STACK_PACK block in ${agentsPath}`));
-    } catch {
-      await fs.mkdir(targetDir, { recursive: true });
-      await fs.writeFile(agentsPath, moduleAgentsContent, "utf8");
-      console.log(chalk.green(`✔️ Created ${agentsPath}`));
+  if (options.agent === "antigravity" || options.agent === "both") {
+    if (options.dryRun) {
+      console.log(chalk.gray(`[Dry Run] Would write/update GEMINI.md at ${geminiPath}`));
+    } else {
+      try {
+        await fs.access(geminiPath);
+        await updateFileWithBlock(geminiPath, "STACK_PACK", stackContent);
+        console.log(chalk.green(`✔️ Updated STACK_PACK block in ${geminiPath}`));
+      } catch {
+        await fs.mkdir(targetDir, { recursive: true });
+        await fs.writeFile(geminiPath, moduleAgentsContent, "utf8");
+        console.log(chalk.green(`✔️ Created ${geminiPath}`));
+      }
     }
   }
+
+  if (options.agent === "codex" || options.agent === "both") {
+    if (options.dryRun) {
+      console.log(chalk.gray(`[Dry Run] Would write/update AGENTS.md at ${agentsPath}`));
+    } else {
+      try {
+        await fs.access(agentsPath);
+        await updateFileWithBlock(agentsPath, "STACK_PACK", stackContent);
+        console.log(chalk.green(`✔️ Updated STACK_PACK block in ${agentsPath}`));
+      } catch {
+        await fs.mkdir(targetDir, { recursive: true });
+        await fs.writeFile(agentsPath, moduleAgentsContent, "utf8");
+        console.log(chalk.green(`✔️ Created ${agentsPath}`));
+      }
+    }
+  }
+
+  // Write IDE Rules to target directory
+  const ideRulesContent = await renderTemplate("common/ide-rules.hbs", {
+    agent: options.agent,
+  });
+  const ideFiles = [".cursorrules", ".copilot-instructions.md", ".clinerules"];
+  for (const file of ideFiles) {
+    if (options.dryRun) {
+      console.log(chalk.gray(`[Dry Run] Would write IDE rule file to ${path.join(targetDir, file)}`));
+    } else {
+      await fs.writeFile(path.join(targetDir, file), ideRulesContent, "utf8");
+    }
+  }
+  if (!options.dryRun) {
+    console.log(chalk.green(`✔️ Created IDE prompt anchors at ${targetDir} (.cursorrules, .copilot-instructions.md, .clinerules)`));
+  }
+  await updateGitignore(targetDir, options.dryRun);
 
   // 4. Copy rules and skills for the target stack
   const stackCtx = (analysis as any)[targetStack] || {};

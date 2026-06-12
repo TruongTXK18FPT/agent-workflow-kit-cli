@@ -17,7 +17,7 @@ export function runCli() {
   program
     .name("agent-workflow-kit")
     .description("Generate AI coding workflows/rules/templates for Codex and Antigravity")
-    .version("1.2.0");
+    .version("1.2.1");
 
   program
     .command("init")
