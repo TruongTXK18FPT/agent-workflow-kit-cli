@@ -49,7 +49,14 @@ function printSuccessAndNextSteps(options: InitOptions) {
 
 export async function updateGitignore(targetDir: string, dryRun: boolean) {
   const gitignorePath = path.join(targetDir, ".gitignore");
-  const rulesToIgnore = [".cursorrules", ".copilot-instructions.md", ".clinerules"];
+  const rulesToIgnore = [
+    ".cursorrules",
+    ".copilot-instructions.md",
+    ".clinerules",
+    "AGENTS.md",
+    "GEMINI.md",
+    ".agents/"
+  ];
   if (dryRun) {
     console.log(chalk.gray(`[Dry Run] Would update .gitignore in ${targetDir} to exclude IDE rule files.`));
     return;

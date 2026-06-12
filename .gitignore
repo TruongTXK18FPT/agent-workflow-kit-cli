@@ -7,3 +7,9 @@ dist/
 coverage/
 scratch_test/
 awk-test-*/
+# Agent Workflow Kit IDE rules
+.cursorrules
+.copilot-instructions.md
+.clinerules
+AGENTS.md
+GEMINI.md
