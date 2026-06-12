@@ -157,3 +157,46 @@ export interface PluginRegistry {
   registerAgentRole(role: AgentRole): void;
   registerExecutor(name: string, executeFn: (params: any, runState: WorkflowRunState) => Promise<any>): void;
 }
+
+// --- Layer 2 & 5 Additions: Workflow Definition and Agent Role Catalog ---
+
+export interface WorkflowDefinition {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  supportedArchitectures: string[];
+  requiredRoles: string[];
+  graph: DirectedWorkflowGraph;
+}
+
+export interface AgentRoleDefinition {
+  id: string;
+  name: string;
+  description: string;
+  responsibilities: string[];
+  requiredInputs: string[];
+  expectedOutputs: string[];
+  validationChecklist: string[];
+  reviewChecklist: string[];
+}
+
+// --- ADR Additions: Architectural Decision Records ---
+
+export interface ADRMetadata {
+  affectedFiles?: string[];
+  affectedModules?: string[];
+  decisionMakerRole?: string;
+  [key: string]: any;
+}
+
+export interface ADRDefinition {
+  id: string; // e.g. "ADR-0001"
+  title: string;
+  date: string;
+  status: 'proposed' | 'accepted' | 'rejected' | 'superseded';
+  context: string;
+  decision: string;
+  consequences: string;
+  metadata?: ADRMetadata;
+}

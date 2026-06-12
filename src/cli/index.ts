@@ -12,6 +12,9 @@ import { runDoctor } from "./commands/doctor.js";
 import { runExport } from "./commands/export.js";
 import { runWorkflowCommand, resumeWorkflowCommand } from "./commands/run.js";
 import { runProfileCheck } from "./commands/profile.js";
+import { listWorkflows, showWorkflow, validateWorkflow, runWorkflowById } from "./commands/workflow.js";
+import { listRoles, showRole, validateRoles } from "./commands/role.js";
+import { createAdrCommand, listAdrsCommand, showAdrCommand, searchAdrsCommand } from "./commands/adr.js";
 
 const program = new Command();
 
@@ -125,6 +128,155 @@ export function runCli() {
         await runProfileCheck(options);
       } catch (err) {
         console.error(chalk.red(`Error validation profile rules: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  // --- Workflow Group Subcommands ---
+  const workflowCmd = program.command("workflow").description("Manage and execute AWOS workflow packs");
+
+  workflowCmd
+    .command("list")
+    .description("List discovered workflow packs")
+    .action(async () => {
+      try {
+        await listWorkflows();
+      } catch (err) {
+        console.error(chalk.red(`Error: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  workflowCmd
+    .command("show <id>")
+    .description("Show workflow pack steps and metadata")
+    .action(async (id) => {
+      try {
+        await showWorkflow(id);
+      } catch (err) {
+        console.error(chalk.red(`Error: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  workflowCmd
+    .command("validate <id>")
+    .description("Validate a workflow pack schema and graph cyclic constraints")
+    .action(async (id) => {
+      try {
+        await validateWorkflow(id);
+      } catch (err) {
+        console.error(chalk.red(`Error: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  workflowCmd
+    .command("run <id>")
+    .description("Run a registered workflow pack by ID")
+    .option("--inputs <inputs>", "Path to inputs parameter JSON file or inline string")
+    .option("--dry-run", "Run nodes in dry-run mode", false)
+    .action(async (id, options) => {
+      try {
+        await runWorkflowById(id, options);
+      } catch (err) {
+        console.error(chalk.red(`Error running workflow: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  // --- Role Group Subcommands ---
+  const roleCmd = program.command("role").description("Manage agent role profiles");
+
+  roleCmd
+    .command("list")
+    .description("List all discovered role profiles in catalog")
+    .action(async () => {
+      try {
+        await listRoles();
+      } catch (err) {
+        console.error(chalk.red(`Error: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  roleCmd
+    .command("show <id>")
+    .description("Show agent role details, checklists and inputs schema")
+    .action(async (id) => {
+      try {
+        await showRole(id);
+      } catch (err) {
+        console.error(chalk.red(`Error: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  roleCmd
+    .command("validate")
+    .description("Validate all roles catalog files schema parameters")
+    .action(async () => {
+      try {
+        await validateRoles();
+      } catch (err) {
+        console.error(chalk.red(`Error: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  // --- ADR Group Subcommands ---
+  const adrCmd = program.command("adr").description("Manage Architectural Decision Records");
+
+  adrCmd
+    .command("create")
+    .description("Create a new numbered architectural decision record (ADR)")
+    .option("--title <title>", "ADR decision title")
+    .option("--status <status>", "Initial status: proposed | accepted | rejected | superseded", "proposed")
+    .option("--context <context>", "Context background explanation")
+    .option("--decision <decision>", "Architectural decision detail statement")
+    .option("--consequences <consequences>", "Repercussions of decision taken")
+    .option("--decision-maker <maker>", "Role or name of decider", "AWOS System")
+    .action(async (options) => {
+      try {
+        await createAdrCommand(options);
+      } catch (err) {
+        console.error(chalk.red(`Error: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  adrCmd
+    .command("list")
+    .description("List all saved ADR documents")
+    .action(async () => {
+      try {
+        await listAdrsCommand();
+      } catch (err) {
+        console.error(chalk.red(`Error: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  adrCmd
+    .command("show <id>")
+    .description("Display details of a numbered ADR document")
+    .action(async (id) => {
+      try {
+        await showAdrCommand(id);
+      } catch (err) {
+        console.error(chalk.red(`Error: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  adrCmd
+    .command("search <keyword>")
+    .description("Search all ADR documents for keyword text matches")
+    .action(async (keyword) => {
+      try {
+        await searchAdrsCommand(keyword);
+      } catch (err) {
+        console.error(chalk.red(`Error: ${err instanceof Error ? err.message : String(err)}`));
         process.exit(1);
       }
     });

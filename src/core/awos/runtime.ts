@@ -181,6 +181,17 @@ export class WorkflowRuntime {
       this.runState.steps[stepIdx].startedAt = new Date().toISOString();
       await this.persistState();
 
+      // Resolve role checks if configured
+      if (node.role) {
+        try {
+          const { RoleRegistry } = await import("./registry.js");
+          const roleDef = await RoleRegistry.load(node.role, path.join(this.workspaceRoot, ".agents/roles"));
+          console.log(`[AWOS Runtime] Role '${roleDef.id}' loaded for step '${node.name}'. Asserting responsibilities...`);
+        } catch (err) {
+          console.log(`[AWOS Runtime] Warning: Active role metadata for '${node.role}' could not be loaded: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+
       try {
         let success = true;
         let outputs: Record<string, any> = {};
@@ -197,6 +208,23 @@ export class WorkflowRuntime {
             } else {
               const { stdout, stderr } = await execAsync(params.command, { cwd: this.workspaceRoot });
               outputs = { stdout, stderr };
+            }
+          } else if (executor === "adr-generate") {
+            if (options.dryRun) {
+              console.log(`[Dry Run] Would generate ADR: ${params.title || "Decision"}`);
+              outputs = { adrId: "ADR-MOCK", status: "proposed" };
+            } else {
+              const { ADRService } = await import("./adr.js");
+              const generated = await ADRService.create(this.workspaceRoot, {
+                title: params.title || "Decision",
+                status: params.status || "proposed",
+                context: params.context || "",
+                decision: params.decision || "",
+                consequences: params.consequences || "",
+                metadata: params.metadata || {},
+              });
+              outputs = { adrId: generated.id, status: generated.status };
+              console.log(`[AWOS Runtime] Generated Architectural Decision Record: ${generated.id}`);
             }
           }
         } else if (node.type === "conditional") {
