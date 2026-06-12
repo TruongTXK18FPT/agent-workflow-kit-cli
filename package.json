@@ -1,6 +1,6 @@
 {
   "name": "agent-workflow-kit-cli",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "AI-Ready Repository Workflow Generator & Guideline Optimizer for Codex and Antigravity",
   "type": "module",
   "main": "./dist/index.js",
