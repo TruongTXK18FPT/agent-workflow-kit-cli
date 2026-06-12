@@ -90,7 +90,18 @@ async function detectProjectStackDirect(cwd: string): Promise<ProjectStack[]> {
         stacks.push("python-ai");
       }
     } catch {
-      // Ignore
+      try {
+        const pipfilePath = path.join(cwd, "Pipfile");
+        const content = await fs.readFile(pipfilePath, "utf8");
+        if (content.includes("fastapi")) {
+          stacks.push("fastapi");
+        }
+        if (aiKeywords.some(kw => content.includes(kw))) {
+          stacks.push("python-ai");
+        }
+      } catch {
+        // Ignore
+      }
     }
   }
 
@@ -98,35 +109,73 @@ async function detectProjectStackDirect(cwd: string): Promise<ProjectStack[]> {
 }
 
 /**
- * Scans the workspace directory and subfolders (1-level deep) for monorepo detection.
+ * Helper to recursively search for modules containing manifest configurations up to maxDepth.
  */
-export async function detectProjectStack(cwd: string): Promise<ProjectStack[]> {
-  const stacks = await detectProjectStackDirect(cwd);
+async function findModulesRecursively(
+  baseDir: string,
+  currentDir: string,
+  maxDepth: number,
+  currentDepth: number = 0
+): Promise<ProjectModule[]> {
+  const modules: ProjectModule[] = [];
 
-  // Scan 1-level deep subdirectories for potential monorepos/multimodules
-  try {
-    const entries = await fs.readdir(cwd, { withFileTypes: true });
-    for (const entry of entries) {
-      if (
-        entry.isDirectory() &&
-        !entry.name.startsWith(".") &&
-        entry.name !== "node_modules" &&
-        entry.name !== "dist"
-      ) {
-        const subPath = path.join(cwd, entry.name);
-        const subStacks = await detectProjectStackDirect(subPath);
-        for (const stack of subStacks) {
-          if (!stacks.includes(stack)) {
-            stacks.push(stack);
-          }
-        }
-      }
-    }
-  } catch {
-    // Ignore
+  // Skip standard build and internal directories to avoid deep scans
+  const dirName = path.basename(currentDir);
+  if (
+    dirName.startsWith(".") ||
+    dirName === "node_modules" ||
+    dirName === "target" ||
+    dirName === "build" ||
+    dirName === "dist" ||
+    dirName === "bin" ||
+    dirName === "out" ||
+    dirName === "venv" ||
+    dirName === ".venv"
+  ) {
+    return modules;
   }
 
-  return stacks;
+  // Detect direct stack presets in this current directory
+  const directStacks = await detectProjectStackDirect(currentDir);
+  if (directStacks.length > 0) {
+    modules.push({
+      dir: currentDir,
+      name: currentDir === baseDir ? "." : path.relative(baseDir, currentDir).replace(/\\/g, "/"),
+      stacks: directStacks,
+    });
+  }
+
+  // If we haven't hit max depth, traverse subdirectories
+  if (currentDepth < maxDepth) {
+    try {
+      const entries = await fs.readdir(currentDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const subPath = path.join(currentDir, entry.name);
+          const subModules = await findModulesRecursively(baseDir, subPath, maxDepth, currentDepth + 1);
+          modules.push(...subModules);
+        }
+      }
+    } catch {
+      // Ignore directory read errors
+    }
+  }
+
+  return modules;
+}
+
+/**
+ * Scans the workspace directory and subfolders (up to 3 levels deep) for monorepo detection.
+ */
+export async function detectProjectStack(cwd: string): Promise<ProjectStack[]> {
+  const modules = await detectProjectModules(cwd);
+  const stacks = new Set<ProjectStack>();
+  for (const mod of modules) {
+    for (const stack of mod.stacks) {
+      stacks.add(stack);
+    }
+  }
+  return Array.from(stacks);
 }
 
 export interface ProjectModule {
@@ -136,44 +185,8 @@ export interface ProjectModule {
 }
 
 /**
- * Detects stacks grouped by module directories (root + 1-level deep directories).
+ * Detects stacks grouped by module directories (root + up to 3 levels deep directories).
  */
 export async function detectProjectModules(cwd: string): Promise<ProjectModule[]> {
-  const modules: ProjectModule[] = [];
-
-  const rootStacks = await detectProjectStackDirect(cwd);
-  if (rootStacks.length > 0) {
-    modules.push({
-      dir: cwd,
-      name: ".",
-      stacks: rootStacks,
-    });
-  }
-
-  try {
-    const entries = await fs.readdir(cwd, { withFileTypes: true });
-    for (const entry of entries) {
-      if (
-        entry.isDirectory() &&
-        !entry.name.startsWith(".") &&
-        entry.name !== "node_modules" &&
-        entry.name !== "dist"
-      ) {
-        const subPath = path.join(cwd, entry.name);
-        const subStacks = await detectProjectStackDirect(subPath);
-        if (subStacks.length > 0) {
-          modules.push({
-            dir: subPath,
-            name: entry.name,
-            stacks: subStacks,
-          });
-        }
-      }
-    }
-  } catch {
-    // Ignore
-  }
-
-  return modules;
+  return findModulesRecursively(cwd, cwd, 3);
 }
-

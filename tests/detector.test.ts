@@ -90,4 +90,41 @@ describe("Stack Detector", () => {
     expect(names).toContain("frontend");
     expect(names).toContain("backend");
   });
+
+  it("should detect fastapi and python-ai if Pipfile contains them", async () => {
+    await fs.writeFile(
+      path.join(tmpDir, "Pipfile"),
+      `[packages]\nfastapi = "*"\ntorch = "*"`,
+      "utf8"
+    );
+
+    const stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("fastapi");
+    expect(stacks).toContain("python-ai");
+  });
+
+  it("should detect deep monorepo structure up to depth 3", async () => {
+    // Write nested app at depth 3 (apps/sub/web)
+    const deepDir = path.join(tmpDir, "apps", "sub", "web");
+    await fs.mkdir(deepDir, { recursive: true });
+    await fs.writeFile(
+      path.join(deepDir, "package.json"),
+      JSON.stringify({ dependencies: { react: "^19.0.0" } }),
+      "utf8"
+    );
+
+    // Write nested app at depth 3 (services/nested/payment)
+    const deeperDir = path.join(tmpDir, "services", "nested", "payment");
+    await fs.mkdir(deeperDir, { recursive: true });
+    await fs.writeFile(path.join(deeperDir, "pom.xml"), "<project></project>", "utf8");
+
+    const stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("react-ts");
+    expect(stacks).toContain("spring-boot");
+
+    const modules = await detectProjectModules(tmpDir);
+    const names = modules.map((m) => m.name);
+    expect(names).toContain("apps/sub/web");
+    expect(names).toContain("services/nested/payment");
+  });
 });

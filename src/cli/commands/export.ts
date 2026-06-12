@@ -73,10 +73,11 @@ export function parseSkillFile(content: string, defaultName: string): SkillData 
 }
 
 export async function runExport(target: string, options: ExportOptions) {
-  if (target.toLowerCase() !== "antigravity") {
+  const normTarget = target.toLowerCase();
+  if (normTarget !== "antigravity" && normTarget !== "codex") {
     console.warn(
       chalk.yellow(
-        `Warning: Currently, only 'antigravity' target is officially optimized, but trying to export custom rules anyway.`
+        `Warning: Currently, only 'antigravity' and 'codex' targets are officially optimized, but trying to export custom rules anyway.`
       )
     );
   }

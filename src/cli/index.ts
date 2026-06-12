@@ -6,6 +6,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { runInit } from "./commands/init.js";
+import { runAdd } from "./commands/add.js";
 import { runSync } from "./commands/sync.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runExport } from "./commands/export.js";
@@ -29,6 +30,21 @@ export function runCli() {
         await runInit(options);
       } catch (err) {
         console.error(chalk.red(`Error running init: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  program
+    .command("add <stack>")
+    .description("Manually add/install a stack pack to a specific folder")
+    .option("--path <path>", "Target folder path to install the guidelines", ".")
+    .option("--agent <agent>", "Specify target agent profile: both | codex | antigravity", "both")
+    .option("--dry-run", "Output actions to console without writing any files", false)
+    .action(async (stack, options) => {
+      try {
+        await runAdd(stack, options);
+      } catch (err) {
+        console.error(chalk.red(`Error running add: ${err instanceof Error ? err.message : String(err)}`));
         process.exit(1);
       }
     });
