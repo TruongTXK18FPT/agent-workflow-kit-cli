@@ -10,6 +10,8 @@ import { runAdd } from "./commands/add.js";
 import { runSync } from "./commands/sync.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runExport } from "./commands/export.js";
+import { runWorkflowCommand, resumeWorkflowCommand } from "./commands/run.js";
+import { runProfileCheck } from "./commands/profile.js";
 
 const program = new Command();
 
@@ -84,6 +86,45 @@ export function runCli() {
         await runExport(target, { clipboard: options.clipboard });
       } catch (err) {
         console.error(chalk.red(`Error running export: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  program
+    .command("run <workflow>")
+    .description("Execute an AWOS graph workflow")
+    .option("--inputs <inputs>", "Path to input JSON file or inline JSON string")
+    .option("--dry-run", "Execute workflow steps in simulation mode", false)
+    .action(async (workflow, options) => {
+      try {
+        await runWorkflowCommand(workflow, options);
+      } catch (err) {
+        console.error(chalk.red(`Error running workflow: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  program
+    .command("resume <runId>")
+    .description("Resume a suspended AWOS workflow")
+    .action(async (runId) => {
+      try {
+        await resumeWorkflowCommand(runId);
+      } catch (err) {
+        console.error(chalk.red(`Error resuming workflow: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  program
+    .command("profile")
+    .description("Validate directory architecture structure and rules boundaries")
+    .option("--profile <profile>", "Target profile name (e.g. clean-architecture)")
+    .action(async (options) => {
+      try {
+        await runProfileCheck(options);
+      } catch (err) {
+        console.error(chalk.red(`Error validation profile rules: ${err instanceof Error ? err.message : String(err)}`));
         process.exit(1);
       }
     });
