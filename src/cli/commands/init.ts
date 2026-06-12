@@ -103,6 +103,90 @@ async function writeWorkspaceIdeRulesAndGitignore(cwd: string, options: InitOpti
   await updateGitignore(cwd, options.dryRun);
 }
 
+async function writeDefaultWorkflow(cwd: string, options: InitOptions) {
+  const workflowsDir = path.join(cwd, ".agents", "workflows");
+  const workflowFile = path.join(workflowsDir, "pr-verification.json");
+
+  const sampleWorkflow = {
+    id: "pr-verification",
+    name: "Pull Request Verification & ADR Flow",
+    description: "Compiles project, validates architecture boundaries, creates ADR, and requests human sign-off.",
+    version: "1.0.0",
+    supportedArchitectures: ["layered", "clean-architecture", "feature-first"],
+    requiredRoles: ["developer"],
+    graph: {
+      nodes: [
+        {
+          id: "build-and-lint",
+          name: "Compile and Lint Check",
+          type: "task",
+          executor: "command",
+          params: {
+            command: "npm run build || mvn compile || python -m py_compile **/*.py"
+          },
+          mockOutput: {
+            status: "success",
+            duration: "3.5s"
+          }
+        },
+        {
+          id: "verify-architecture",
+          name: "Verify Layer Boundaries",
+          type: "task",
+          executor: "command",
+          params: {
+            command: "npx agent-workflow-kit-cli profile"
+          },
+          mockOutput: {
+            violationsFound: 0,
+            status: "clean"
+          }
+        },
+        {
+          id: "create-adr",
+          name: "Generate Architecture Decision Record",
+          type: "task",
+          executor: "adr-generate",
+          params: {
+            title: "Automated PR Validation Record",
+            status: "proposed",
+            context: "Auto-generated during pipeline test run.",
+            decision: "All structural layers passed boundary checks successfully.",
+            consequences: "Workspace rules integrity confirmed."
+          },
+          mockOutput: {
+            adrId: "ADR-0001",
+            status: "proposed"
+          }
+        },
+        {
+          id: "operator-approval",
+          name: "Operator Sign-off Hook",
+          type: "approval"
+        }
+      ],
+      edges: [
+        { sourceId: "build-and-lint", targetId: "verify-architecture" },
+        { sourceId: "verify-architecture", targetId: "create-adr" },
+        { sourceId: "create-adr", targetId: "operator-approval" }
+      ]
+    }
+  };
+
+  if (options.dryRun) {
+    console.log(chalk.gray(`[Dry Run] Would create default workflow under ${workflowFile}`));
+    return;
+  }
+
+  try {
+    await fs.mkdir(workflowsDir, { recursive: true });
+    await fs.writeFile(workflowFile, JSON.stringify(sampleWorkflow, null, 2), "utf8");
+    console.log(chalk.green("✔️ Created default workflow pack: .agents/workflows/pr-verification.json"));
+  } catch (err) {
+    console.warn(chalk.yellow(`Could not create default workflow: ${err instanceof Error ? err.message : String(err)}`));
+  }
+}
+
 export async function runInit(options: InitOptions) {
   const cwd = process.cwd();
   console.log(chalk.bold.cyan("\n🚀 Agent Workflow Kit - Initializing..."));
@@ -387,6 +471,9 @@ export async function runInit(options: InitOptions) {
 
   // Write workspace-level IDE rules and update gitignore
   await writeWorkspaceIdeRulesAndGitignore(cwd, options);
+
+  // Write default sample workflow DAG
+  await writeDefaultWorkflow(cwd, options);
 
   printSuccessAndNextSteps(options);
 }
