@@ -6,6 +6,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { ArchitectureProfile, FolderRule } from "./types.js";
+import { parseImports } from "../parser.js";
 
 export interface ArchitectureViolation {
   filePath: string;
@@ -115,7 +116,9 @@ export async function loadProfile(
   profileName: string,
   profilesDir?: string
 ): Promise<ArchitectureProfile> {
-  let profile = BUILTIN_PROFILES[profileName];
+  const { loadAWOSPlugins } = await import("./registry.js");
+  const registry = await loadAWOSPlugins(process.cwd());
+  let profile = registry.profiles.get(profileName) || BUILTIN_PROFILES[profileName];
 
   if (profilesDir) {
     try {
@@ -155,11 +158,11 @@ function matchPathPattern(filePath: string, pattern: string): boolean {
 /**
  * Validates a single file content and path against architectural rules.
  */
-export function validateFile(
+export async function validateFile(
   filePath: string,
   content: string,
   profile: ArchitectureProfile
-): ArchitectureViolation[] {
+): Promise<ArchitectureViolation[]> {
   const violations: ArchitectureViolation[] = [];
   const relativePath = filePath.replace(/\\/g, "/");
 
@@ -179,15 +182,9 @@ export function validateFile(
     if (matchPathPattern(relativePath, rule.pathPattern)) {
       // Check imports
       if (rule.forbiddenImports || rule.allowedImports) {
-        // Find imports in file using standard regexes
-        const importsMatches = content.matchAll(
-          /(?:import\s+[\s\S]*?from\s+['"]([^'"]+)['"])|(?:import\s+([a-zA-Z0-9._]+);)/g
-        );
+        const parsedImports = await parseImports(filePath, content);
 
-        for (const match of importsMatches) {
-          const importedRef = match[1] || match[2];
-          if (!importedRef) continue;
-
+        for (const importedRef of parsedImports) {
           // Forbidden check
           if (rule.forbiddenImports) {
             for (const forbidden of rule.forbiddenImports) {
@@ -279,7 +276,7 @@ export async function validateArchitecture(
           const content = await fs.readFile(fullPath, "utf8");
 
           if (!isTest) {
-            const fileViolations = validateFile(fullPath, content, profile);
+            const fileViolations = await validateFile(fullPath, content, profile);
             violations.push(...fileViolations);
 
             // Verify test file existence if required

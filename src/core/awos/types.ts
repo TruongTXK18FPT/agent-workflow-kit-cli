@@ -46,6 +46,7 @@ export interface WorkflowNode {
   role?: string;          // Target AgentRole required for this step
   retryLimit?: number;    // Used if type is 'retry'
   rollbackNodeId?: string; // Node to execute on failure
+  mockOutput?: Record<string, any>; // Mock outputs to use in dry-run mode
 }
 
 export interface WorkflowEdge {

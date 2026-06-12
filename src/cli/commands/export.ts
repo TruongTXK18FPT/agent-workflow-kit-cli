@@ -10,6 +10,7 @@ import { writeToClipboard } from "../../utils/clipboard.js";
 
 interface ExportOptions {
   clipboard: boolean;
+  output?: string;
 }
 
 interface SkillData {
@@ -134,6 +135,27 @@ export async function runExport(target: string, options: ExportOptions) {
   }
 
   output = output.trim();
+
+  if (options.output) {
+    console.log(chalk.blue(`Writing exported workflows to file: ${options.output}...`));
+    try {
+      const fullOutputPath = path.resolve(cwd, options.output);
+      await fs.mkdir(path.dirname(fullOutputPath), { recursive: true });
+      await fs.writeFile(fullOutputPath, output, "utf8");
+      console.log(
+        chalk.green(
+          `✔️ Successfully exported ${parsedSkills.length} custom workflow(s) to ${options.output}!`
+        )
+      );
+    } catch (err) {
+      console.error(
+        chalk.red(
+          `❌ Failed to write export file: ${err instanceof Error ? err.message : String(err)}`
+        )
+      );
+    }
+    return;
+  }
 
   if (options.clipboard) {
     console.log(chalk.blue("Copying exported workflows to clipboard..."));

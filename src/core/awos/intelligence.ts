@@ -8,6 +8,8 @@ import path from "path";
 import crypto from "crypto";
 import { RepositoryContext, ModuleBoundary, TestingStrategy } from "./types.js";
 import { detectProjectModules } from "../detector.js";
+import { parseImports } from "../parser.js";
+import { loadAWOSPlugins } from "./registry.js";
 
 const CACHE_DIR = ".agents/cache";
 const CACHE_FILE = path.join(CACHE_DIR, "repo_context.json");
@@ -91,24 +93,13 @@ async function analyzeImportGraph(
           await scanDir(fullPath, currentModule);
         } else if (entry.isFile() && /\.(ts|tsx|java|py)$/.test(entry.name)) {
           const content = await fs.readFile(fullPath, "utf8");
-          // Simple regex import parsing
-          // e.g. import ... from '...'; import com.acme.app.customer.Entity;
-          const importMatches = content.matchAll(/import\s+[\s\S]*?from\s+['"]([^'"]+)['"]/g);
-          for (const match of importMatches) {
-            const importPath = match[1];
+          const parsedImports = await parseImports(fullPath, content);
+          for (const importedRef of parsedImports) {
             for (const mod of modules) {
-              if (mod !== currentModule && importPath.includes(`/${mod}`)) {
-                dependencies[currentModule].add(mod);
-              }
-            }
-          }
-
-          // Java package import detection
-          const javaMatches = content.matchAll(/import\s+([a-zA-Z0-9._]+);/g);
-          for (const match of javaMatches) {
-            const importPackage = match[1];
-            for (const mod of modules) {
-              if (mod !== currentModule && importPackage.includes(`.${mod}`)) {
+              if (
+                mod !== currentModule &&
+                (importedRef.includes(`/${mod}`) || importedRef.includes(`.${mod}`))
+              ) {
                 dependencies[currentModule].add(mod);
               }
             }
@@ -204,7 +195,8 @@ export async function buildRepositoryContext(workspaceRoot: string): Promise<Rep
     validationLibraries.push("pydantic");
   }
 
-  return {
+  const registry = await loadAWOSPlugins(workspaceRoot);
+  let context: RepositoryContext = {
     stack: mainStack,
     architecture,
     modules: moduleBoundaries,
@@ -214,6 +206,28 @@ export async function buildRepositoryContext(workspaceRoot: string): Promise<Rep
     },
     hash: manifestHash,
   };
+
+  for (const analyzer of registry.analyzers) {
+    try {
+      const partial = await analyzer.detect(workspaceRoot);
+      context = {
+        ...context,
+        ...partial,
+        testing: {
+          ...context.testing,
+          ...(partial.testing || {}),
+        },
+        validation: {
+          ...context.validation,
+          ...(partial.validation || {}),
+        },
+      };
+    } catch (err) {
+      console.warn(`[AWOS Intelligence] Custom analyzer failed:`, err);
+    }
+  }
+
+  return context;
 }
 
 /**

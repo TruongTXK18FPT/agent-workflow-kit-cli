@@ -184,9 +184,31 @@ export class WorkflowRuntime {
       // Resolve role checks if configured
       if (node.role) {
         try {
-          const { RoleRegistry } = await import("./registry.js");
-          const roleDef = await RoleRegistry.load(node.role, path.join(this.workspaceRoot, ".agents/roles"));
-          console.log(`[AWOS Runtime] Role '${roleDef.id}' loaded for step '${node.name}'. Asserting responsibilities...`);
+          const { loadAWOSPlugins } = await import("./registry.js");
+          const registry = await loadAWOSPlugins(this.workspaceRoot);
+          const customRole = registry.roles.get(node.role);
+          if (customRole) {
+            console.log(`[AWOS Runtime] Custom Role '${node.role}' loaded for step '${node.name}'. Asserting hooks...`);
+            if (customRole.hooks?.preStep) {
+              const { getRepositoryContext } = await import("./intelligence.js");
+              const { loadProfile } = await import("./profiles.js");
+              const repoContext = await getRepositoryContext(this.workspaceRoot);
+              const archProfile = await loadProfile(repoContext.architecture);
+              const res = await customRole.hooks.preStep({
+                runId: this.runState.runId,
+                workspaceRoot: this.workspaceRoot,
+                repoContext,
+                profile: archProfile
+              }, node);
+              if (!res.proceed) {
+                throw new Error(`Role preStep hook rejected execution: ${res.error || "Unknown rejection"}`);
+              }
+            }
+          } else {
+            const { RoleRegistry } = await import("./registry.js");
+            const roleDef = await RoleRegistry.load(node.role, path.join(this.workspaceRoot, ".agents/roles"));
+            console.log(`[AWOS Runtime] Role '${roleDef.id}' loaded for step '${node.name}'. Asserting responsibilities...`);
+          }
         } catch (err) {
           console.log(`[AWOS Runtime] Warning: Active role metadata for '${node.role}' could not be loaded: ${err instanceof Error ? err.message : String(err)}`);
         }
@@ -201,10 +223,21 @@ export class WorkflowRuntime {
           const executor = node.executor || "command";
           const params = node.params || {};
 
-          if (executor === "command" && params.command) {
+          const { loadAWOSPlugins } = await import("./registry.js");
+          const registry = await loadAWOSPlugins(this.workspaceRoot);
+
+          if (registry.executors.has(executor)) {
+            if (options.dryRun) {
+              console.log(`[Dry Run] Would execute custom executor '${executor}' with params:`, params);
+              outputs = node.mockOutput || { log: "Custom dry run completed." };
+            } else {
+              const executeFn = registry.executors.get(executor)!;
+              outputs = await executeFn(params, this.runState);
+            }
+          } else if (executor === "command" && params.command) {
             if (options.dryRun) {
               console.log(`[Dry Run] Would execute shell command: ${params.command}`);
-              outputs = { log: "Dry run completed." };
+              outputs = node.mockOutput || { log: "Dry run completed." };
             } else {
               const { stdout, stderr } = await execAsync(params.command, { cwd: this.workspaceRoot });
               outputs = { stdout, stderr };
@@ -212,7 +245,7 @@ export class WorkflowRuntime {
           } else if (executor === "adr-generate") {
             if (options.dryRun) {
               console.log(`[Dry Run] Would generate ADR: ${params.title || "Decision"}`);
-              outputs = { adrId: "ADR-MOCK", status: "proposed" };
+              outputs = node.mockOutput || { adrId: "ADR-MOCK", status: "proposed" };
             } else {
               const { ADRService } = await import("./adr.js");
               const generated = await ADRService.create(this.workspaceRoot, {

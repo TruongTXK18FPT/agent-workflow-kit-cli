@@ -35,7 +35,7 @@ describe("AWOS Layer 2: Architecture Profiles", () => {
     expect(profile.folderStructure.length).toBeGreaterThan(0);
   });
 
-  it("should detect line limit and forbidden dependency imports violations", () => {
+  it("should detect line limit and forbidden dependency imports violations", async () => {
     const profile: any = {
       name: "test-profile",
       folderStructure: [
@@ -52,8 +52,8 @@ describe("AWOS Layer 2: Architecture Profiles", () => {
     const goodFile = "import { Entity } from '../domain/Entity';\nconst x = 1;";
     const badFile = "import { Db } from '../infrastructure/Db';\nconst y = 2;\n// excess line\n// line 4\n// line 5\n// line 6\n// line 7\n// line 8\n// line 9\n// line 10\n// line 11";
 
-    const goodViolations = validateFile("src/domain/UserService.ts", goodFile, profile);
-    const badViolations = validateFile("src/domain/UserService.ts", badFile, profile);
+    const goodViolations = await validateFile("src/domain/UserService.ts", goodFile, profile);
+    const badViolations = await validateFile("src/domain/UserService.ts", badFile, profile);
 
     expect(goodViolations).toHaveLength(0);
     expect(badViolations.some(v => v.ruleName === "forbiddenImports")).toBe(true);

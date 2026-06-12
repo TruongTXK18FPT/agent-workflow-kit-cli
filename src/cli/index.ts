@@ -22,7 +22,7 @@ export function runCli() {
   program
     .name("agent-workflow-kit")
     .description("Generate AI coding workflows/rules/templates for Codex and Antigravity")
-    .version("1.2.1");
+    .version("1.3.0");
 
   program
     .command("init")
@@ -84,9 +84,10 @@ export function runCli() {
     .command("export <target>")
     .description("Export custom workflows/skills for the target agent (e.g., 'antigravity')")
     .option("--no-clipboard", "Do not copy the exported instructions to clipboard", false)
+    .option("-o, --output <file>", "Write the exported guidelines to a specific file")
     .action(async (target, options) => {
       try {
-        await runExport(target, { clipboard: options.clipboard });
+        await runExport(target, { clipboard: options.clipboard, output: options.output });
       } catch (err) {
         console.error(chalk.red(`Error running export: ${err instanceof Error ? err.message : String(err)}`));
         process.exit(1);

@@ -5,8 +5,9 @@
 
 import { promises as fs } from "fs";
 import path from "path";
-import { WorkflowDefinition, AgentRoleDefinition } from "./types.js";
+import { WorkflowDefinition, AgentRoleDefinition, RepositoryAnalyzer, ArchitectureProfile, AgentRole, WorkflowRunState, PluginRegistry } from "./types.js";
 import { validateWorkflowGraph } from "./runtime.js";
+import { loadConfig } from "../config.js";
 
 /**
  * Registry for discovery, validation, and loading of reusable workflow graph definitions.
@@ -181,4 +182,70 @@ export class RoleRegistry {
     }
     return matched;
   }
+}
+
+export class PluginRegistryImpl implements PluginRegistry {
+  public analyzers: RepositoryAnalyzer[] = [];
+  public profiles = new Map<string, ArchitectureProfile>();
+  public roles = new Map<string, AgentRole>();
+  public executors = new Map<string, (params: any, runState: WorkflowRunState) => Promise<any>>();
+
+  registerAnalyzer(analyzer: RepositoryAnalyzer): void {
+    this.analyzers.push(analyzer);
+  }
+
+  registerArchitectureProfile(profile: ArchitectureProfile): void {
+    this.profiles.set(profile.name, profile);
+  }
+
+  registerAgentRole(role: AgentRole): void {
+    this.roles.set(role.id, role);
+  }
+
+  registerExecutor(
+    name: string,
+    executeFn: (params: any, runState: WorkflowRunState) => Promise<any>
+  ): void {
+    this.executors.set(name, executeFn);
+  }
+}
+
+export const pluginRegistry = new PluginRegistryImpl();
+
+let pluginsLoaded = false;
+
+export async function loadAWOSPlugins(workspaceRoot: string): Promise<PluginRegistryImpl> {
+  if (pluginsLoaded) {
+    return pluginRegistry;
+  }
+  const config = await loadConfig(workspaceRoot);
+  if (config.plugins && config.plugins.length > 0) {
+    for (const pluginSpec of config.plugins) {
+      try {
+        let importPath = pluginSpec;
+        if (pluginSpec.startsWith(".") || pluginSpec.startsWith("/") || pluginSpec.includes("\\")) {
+          importPath = path.resolve(workspaceRoot, pluginSpec);
+        }
+        const module = await import(importPath);
+        const PluginClass = module.default || module.Plugin || module;
+        const pluginInstance = typeof PluginClass === "function" ? new PluginClass() : PluginClass;
+        if (pluginInstance && typeof pluginInstance.register === "function") {
+          pluginInstance.register(pluginRegistry);
+          console.log(`[AWOS Registry] Registered plugin: ${pluginInstance.manifest?.id || pluginSpec}`);
+        }
+      } catch (err) {
+        console.warn(`[AWOS Registry] Failed to load plugin '${pluginSpec}':`, err);
+      }
+    }
+  }
+  pluginsLoaded = true;
+  return pluginRegistry;
+}
+
+export function clearPluginsCache() {
+  pluginsLoaded = false;
+  pluginRegistry.analyzers = [];
+  pluginRegistry.profiles.clear();
+  pluginRegistry.roles.clear();
+  pluginRegistry.executors.clear();
 }
