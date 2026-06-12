@@ -14,7 +14,7 @@ export type ProjectStack = "spring-boot" | "react-ts" | "fastapi";
 async function detectProjectStackDirect(cwd: string): Promise<ProjectStack[]> {
   const stacks: ProjectStack[] = [];
 
-  // 1. Detect Java Spring Boot (pom.xml)
+  // 1. Detect Java Spring Boot (pom.xml, build.gradle, or build.gradle.kts)
   try {
     const pomPath = path.join(cwd, "pom.xml");
     const stat = await fs.stat(pomPath);
@@ -22,7 +22,23 @@ async function detectProjectStackDirect(cwd: string): Promise<ProjectStack[]> {
       stacks.push("spring-boot");
     }
   } catch {
-    // Ignore
+    try {
+      const gradlePath = path.join(cwd, "build.gradle");
+      const stat = await fs.stat(gradlePath);
+      if (stat.isFile()) {
+        stacks.push("spring-boot");
+      }
+    } catch {
+      try {
+        const gradleKtsPath = path.join(cwd, "build.gradle.kts");
+        const stat = await fs.stat(gradleKtsPath);
+        if (stat.isFile()) {
+          stacks.push("spring-boot");
+        }
+      } catch {
+        // Ignore
+      }
+    }
   }
 
   // 2. Detect React + TypeScript (package.json containing react dependency)

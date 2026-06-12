@@ -8,6 +8,11 @@ import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
+// Register custom Handlebars helpers
+handlebars.registerHelper("eq", function (a, b) {
+  return a === b;
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -27,12 +32,18 @@ export async function renderTemplate(templatePath: string, context: any): Promis
 }
 
 /**
- * Reads a static rules file as-is without Handlebars interpolation.
+ * Reads a static template file (rules or skills) with optional Handlebars interpolation.
  * @param filePath Relative path inside templates folder (e.g. 'spring-boot/rules/java-style.md')
+ * @param context Optional key-value data for compilation
  */
-export async function readStaticTemplateFile(filePath: string): Promise<string> {
+export async function readStaticTemplateFile(filePath: string, context?: any): Promise<string> {
   const fullPath = path.join(TEMPLATES_DIR, filePath);
-  return fs.readFile(fullPath, "utf8");
+  const fileContent = await fs.readFile(fullPath, "utf8");
+  if (context) {
+    const compiled = handlebars.compile(fileContent);
+    return compiled(context);
+  }
+  return fileContent;
 }
 
 /**

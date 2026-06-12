@@ -11,4 +11,4 @@ Enforce strict coding style and layer definitions in this repository.
 - Follow rules defined in @AGENTS.md.
 - Ensure all custom database queries are covered by repository slice tests (`@DataJpaTest`).
 - Before completing work, execute:
-  - `./mvnw verify`
+  - `{{buildCommand}} {{buildVerifyArgs}}`

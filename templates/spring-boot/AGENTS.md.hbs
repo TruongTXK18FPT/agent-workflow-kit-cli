@@ -1,10 +1,19 @@
 ## ☕ Java Spring Boot Guidelines
 
+### 🔄 End-to-End Agent Development Lifecycle
+AI Agents must execute all Java Spring Boot tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Implement layers following the structure guidelines below. Keep logic inside the Service layer.
+2. **Comprehensive Testing:** Write unit tests for services, `@WebMvcTest` for controllers (covering null inputs, bad payloads, and validation boundaries), and `@DataJpaTest` for database operations.
+3. **Troubleshooting & Debugging:** When debugging failures, load and follow the `@spring-debug` skill to isolate issues and write reproducing tests.
+4. **Code Quality & Review:** Perform self-review using `@code-review.md` to check transaction boundaries (`@Transactional`), exceptions, and security checkpoints.
+5. **Production Readiness:** Verify deployment safety rules in `@production-ready.md` (including database migrations, profiles, and Actuator metrics configuration).
+
 ### 🏗️ Architecture & Package Conventions
+{{#if (eq packageLayout "feature-first")}}
 Follow a strict **feature-first** modular packaging layout. Each feature module (e.g. `customer`) must encapsulate all its layers within it:
 
 ```text
-src/main/java/com/acme/app/
+src/main/java/{{packagePath}}/
   customer/
     dto/
       CreateCustomerRequest.java
@@ -24,7 +33,7 @@ src/main/java/com/acme/app/
 
 Corresponding test directories must match the feature layout exactly:
 ```text
-src/test/java/com/acme/app/
+src/test/java/{{packagePath}}/
   customer/
     repository/
       CustomerRepositoryTest.java  # Custom query repository slice tests
@@ -33,10 +42,42 @@ src/test/java/com/acme/app/
     web/
       CustomerControllerTest.java  # Web MVC slice tests
 ```
+{{else}}
+Follow a standard **layer-first** packaging layout:
+
+```text
+src/main/java/{{packagePath}}/
+  controller/
+    CustomerController.java
+  service/
+    CustomerService.java
+    impl/CustomerServiceImpl.java
+  repository/
+    CustomerRepository.java
+  entity/
+    Customer.java
+  dto/
+    CreateCustomerRequest.java
+    CustomerResponse.java
+  mapper/
+    CustomerMapper.java
+```
+
+Corresponding test directories must match the layer layout exactly:
+```text
+src/test/java/{{packagePath}}/
+  controller/
+    CustomerControllerTest.java  # Web MVC slice tests
+  service/
+    CustomerServiceTest.java     # Business logic unit tests (using Mockito)
+  repository/
+    CustomerRepositoryTest.java  # Custom query repository slice tests
+```
+{{/if}}
 
 ### ⚙️ Coding Guidelines
 - **Dependency Injection:** Prefer constructor injection. Do NOT use field-based injection (`@Autowired`).
-- **DTO Validation:** Request DTOs must enforce schemas using `jakarta.validation.constraints` annotations (e.g., `@NotNull`, `@NotBlank`, `@Size`, `@Email`).
+- **DTO Validation:** Request DTOs must enforce schemas using `{{validationLibrary}}.constraints` annotations (e.g., `@NotNull`, `@NotBlank`, `@Size`, `@Email`).
 - **Layer Separation:** Keep controllers thin; delegate all business rules, transactions, and transformations to the service layer.
 
 ### 🛠️ Tooling & Quality Standards
@@ -61,7 +102,7 @@ The project runs Checkstyle for static analysis and Spotless for code formatting
 </plugin>
 ```
 
-### 🧪 Testing Guidelines
+### 🧪 Testing Guidelines (using {{testFramework}})
 All edits must pass local verification tests before completion:
 
 | Test Type | Requirement | Done Criteria |
@@ -71,9 +112,22 @@ All edits must pass local verification tests before completion:
 | **`@DataJpaTest`** | For custom repository queries | Verify custom query logic and entity-database column mappings. |
 | **`@SpringBootTest`** | Complex integrations only | Smoke test the application startup and critical cross-module integrations. |
 
+{{#if isMicroservice}}
+### 🌐 Microservice Guidelines
+This module is configured as a **microservice** registered under:
+- **Service Name:** `{{springApplicationName}}`
+- **Server Port:** `{{serverPort}}`
+
+**Key Directives:**
+- **Communication:** Always use `@FeignClient` calling service names for communicating with other services. Do not hardcode service ports or URLs.
+- **Resilience:** Protect external requests with Resilience4j circuit breakers and define fallback procedures.
+- **Tracing:** Propagate `X-Correlation-Id` headers and verify trace tracing IDs exist in the logger config.
+- **Exception handling:** Define standard Feign `ErrorDecoder` implementations to map downstream client exception status codes correctly.
+{{/if}}
+
 ### 🚀 Verification Commands
 Before completing a task, run the following verification pipeline locally:
 ```bash
-./mvnw clean test
-./mvnw verify
+{{buildCommand}} clean test
+{{buildCommand}} {{buildVerifyArgs}}
 ```

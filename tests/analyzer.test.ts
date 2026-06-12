@@ -1,0 +1,135 @@
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { promises as fs } from "fs";
+import path from "path";
+import os from "os";
+import { analyzeModule } from "../src/core/analyzer.js";
+
+describe("Codebase Analyzer", () => {
+  let tmpDir: string;
+
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "awk-test-analyzer-"));
+  });
+
+  afterEach(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true });
+  });
+
+  it("should detect Maven and feature-first with modern validation/testing by default", async () => {
+    // Write pom.xml to identify spring-boot
+    await fs.writeFile(path.join(tmpDir, "pom.xml"), "<project></project>", "utf8");
+
+    // Write a standard spring-boot folder structure
+    const basePkgDir = path.join(tmpDir, "src/main/java/com/acme/app");
+    await fs.mkdir(basePkgDir, { recursive: true });
+
+    // Write Application.java in basePkgDir to stop package traversal
+    await fs.writeFile(
+      path.join(basePkgDir, "Application.java"),
+      "@SpringBootApplication public class Application {}",
+      "utf8"
+    );
+
+    // Write feature package to look like feature-first
+    const featureDir = path.join(basePkgDir, "customer/controller");
+    await fs.mkdir(featureDir, { recursive: true });
+
+    // Write a dummy Java file with jakarta validation
+    await fs.writeFile(
+      path.join(featureDir, "CustomerController.java"),
+      "import jakarta.validation.constraints.NotNull;\npublic class CustomerController {}",
+      "utf8"
+    );
+
+    const testDir = path.join(tmpDir, "src/test/java/com/acme/app/customer");
+    await fs.mkdir(testDir, { recursive: true });
+    await fs.writeFile(
+      path.join(testDir, "CustomerControllerTest.java"),
+      "import org.junit.jupiter.api.Test;\npublic class CustomerControllerTest {}",
+      "utf8"
+    );
+
+    const context = await analyzeModule(tmpDir, ["spring-boot"]);
+    const sb = context["spring-boot"];
+
+    expect(sb).toBeDefined();
+    expect(sb?.buildTool).toBe("maven");
+    expect(sb?.buildCommand).toBe("mvn"); // no wrapper yet
+    expect(sb?.basePackage).toBe("com.acme.app");
+    expect(sb?.packagePath).toBe("com/acme/app");
+    expect(sb?.validationLibrary).toBe("jakarta.validation");
+    expect(sb?.testFramework).toBe("JUnit 5");
+    expect(sb?.packageLayout).toBe("feature-first");
+  });
+
+  it("should detect Gradle, layer-first layout and legacy javax validation", async () => {
+    // Write build.gradle to identify gradle
+    await fs.writeFile(path.join(tmpDir, "build.gradle"), "// gradle file", "utf8");
+    // Write gradlew wrapper file
+    await fs.writeFile(path.join(tmpDir, "gradlew"), "#!/bin/sh", "utf8");
+
+    // Write a layer-first structure: controller and service folders at base package level
+    const basePkgDir = path.join(tmpDir, "src/main/java/com/example/api");
+    await fs.mkdir(path.join(basePkgDir, "controller"), { recursive: true });
+    await fs.mkdir(path.join(basePkgDir, "service"), { recursive: true });
+
+    // Write dummy Java files importing javax.validation
+    await fs.writeFile(
+      path.join(basePkgDir, "controller/UserController.java"),
+      "import javax.validation.constraints.NotBlank;\npublic class UserController {}",
+      "utf8"
+    );
+
+    // Write JUnit 4 test files
+    const testDir = path.join(tmpDir, "src/test/java/com/example/api/controller");
+    await fs.mkdir(testDir, { recursive: true });
+    await fs.writeFile(
+      path.join(testDir, "UserControllerTest.java"),
+      "import org.junit.Test;\npublic class UserControllerTest {}",
+      "utf8"
+    );
+
+    const context = await analyzeModule(tmpDir, ["spring-boot"]);
+    const sb = context["spring-boot"];
+
+    expect(sb).toBeDefined();
+    expect(sb?.buildTool).toBe("gradle");
+    expect(sb?.buildCommand).toBe("./gradlew");
+    expect(sb?.basePackage).toBe("com.example.api");
+    expect(sb?.packageLayout).toBe("layer-first");
+    expect(sb?.validationLibrary).toBe("javax.validation");
+    expect(sb?.testFramework).toBe("JUnit 4");
+    expect(sb?.isMicroservice).toBe(false); // standard monolith
+  });
+
+  it("should detect microservice configuration and dependencies", async () => {
+    // Write pom.xml with eureka-client dependency
+    await fs.writeFile(
+      path.join(tmpDir, "pom.xml"),
+      "<project><dependency><artifactId>spring-cloud-starter-netflix-eureka-client</artifactId></dependency></project>",
+      "utf8"
+    );
+
+    // Create resources dir
+    const resourcesDir = path.join(tmpDir, "src/main/resources");
+    await fs.mkdir(resourcesDir, { recursive: true });
+
+    // Write application.yml with app name and port
+    const ymlContent = `
+server:
+  port: 8087
+spring:
+  application:
+    name: order-service
+`;
+    await fs.writeFile(path.join(resourcesDir, "application.yml"), ymlContent, "utf8");
+
+    const context = await analyzeModule(tmpDir, ["spring-boot"]);
+    const sb = context["spring-boot"];
+
+    expect(sb).toBeDefined();
+    expect(sb?.isMicroservice).toBe(true);
+    expect(sb?.springApplicationName).toBe("order-service");
+    expect(sb?.serverPort).toBe("8087");
+  });
+});

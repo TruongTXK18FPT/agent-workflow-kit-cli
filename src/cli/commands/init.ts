@@ -18,6 +18,7 @@ import {
   updateFileWithBlock,
   writeRuleWithChunking,
 } from "../../core/emitter.js";
+import { analyzeModule } from "../../core/analyzer.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,9 +39,9 @@ function printSuccessAndNextSteps(options: InitOptions) {
     console.log(chalk.gray(`   - Root: ${chalk.underline("AGENTS.md")}`));
     console.log(chalk.gray(`   - Stack rules: ${chalk.underline(".agents/rules/")}`));
     console.log(chalk.white(`2. Setup automatic git pre-commit hook validation:`));
-    console.log(chalk.cyan(`   run: npx agent-workflow-kit-cli doctor --install-hook`));
+    console.log(chalk.cyan(`   npx agent-workflow-kit-cli doctor --install-hook`));
     console.log(chalk.white(`3. Export custom skills to register with your AI agent (e.g. Antigravity):`));
-    console.log(chalk.cyan(`   run: npx agent-workflow-kit-cli export antigravity`));
+    console.log(chalk.cyan(`   npx agent-workflow-kit-cli export antigravity`));
     console.log(chalk.dim("------------------------------------------\n"));
   }
 }
@@ -127,10 +128,13 @@ export async function runInit(options: InitOptions) {
       )
     );
 
+    const analysis = await analyzeModule(mod.dir, mod.stacks);
+
     let stackContent = "";
     for (const stack of mod.stacks) {
       try {
-        const rendered = await renderTemplate(`${stack}/AGENTS.md.hbs`, {});
+        const stackCtx = analysis[stack] || {};
+        const rendered = await renderTemplate(`${stack}/AGENTS.md.hbs`, stackCtx);
         stackContent += rendered + "\n\n";
       } catch (err) {
         console.warn(
@@ -166,12 +170,17 @@ export async function runInit(options: InitOptions) {
 
     // Copy rules and skills for each stack in this module
     for (const stack of mod.stacks) {
+      const stackCtx = analysis[stack] || {};
+
       // A. Rules
       const rules = await getStackRules(stack);
       for (const rule of rules) {
+        if (rule === "microservice-style.md" && (stackCtx as any).isMicroservice !== true) {
+          continue;
+        }
         const relativeRulePath = `${stack}/rules/${rule}`;
         try {
-          const ruleContent = await readStaticTemplateFile(relativeRulePath);
+          const ruleContent = await readStaticTemplateFile(relativeRulePath, stackCtx);
           const targetRulePath = path.join(mod.dir, ".agents", "rules", rule);
 
           if (options.dryRun) {
@@ -202,7 +211,7 @@ export async function runInit(options: InitOptions) {
       for (const skill of skills) {
         const relativeSkillPath = `${stack}/skills/${skill}`;
         try {
-          const skillContent = await readStaticTemplateFile(relativeSkillPath);
+          const skillContent = await readStaticTemplateFile(relativeSkillPath, stackCtx);
           const targetSkillPath = path.join(mod.dir, ".agents", "skills", skill);
 
           if (options.dryRun) {
