@@ -168,6 +168,33 @@ export async function runInit(options: InitOptions) {
       }
     }
 
+    // Copy common skills for this module
+    try {
+      const commonSkills = await getStackSkills("common");
+      for (const skill of commonSkills) {
+        const relativeSkillPath = `common/skills/${skill}`;
+        try {
+          const skillContent = await readStaticTemplateFile(relativeSkillPath, {});
+          const targetSkillPath = path.join(mod.dir, ".agents", "skills", skill);
+          await fs.mkdir(path.dirname(targetSkillPath), { recursive: true });
+          await fs.writeFile(targetSkillPath, skillContent, "utf8");
+          console.log(
+            chalk.green(
+              `✔️ Wrote common skill ${skill} to ${mod.name}/.agents/skills/${skill}`
+            )
+          );
+        } catch (err) {
+          console.error(
+            chalk.red(
+              `Failed to copy common skill ${skill}: ${err instanceof Error ? err.message : String(err)}`
+            )
+          );
+        }
+      }
+    } catch {
+      // Ignore
+    }
+
     // Copy rules and skills for each stack in this module
     for (const stack of mod.stacks) {
       const stackCtx = analysis[stack] || {};

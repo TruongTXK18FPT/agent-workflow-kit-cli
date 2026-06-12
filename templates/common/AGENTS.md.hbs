@@ -9,6 +9,7 @@ This repository implements the `agent-workflow-kit-cli` configuration standards 
 AI agents MUST follow this strict 5-step workflow for any task:
 
 ### 1. 🔍 Step 1: Research & Context Analysis
+- **Mandatory Configuration Scan:** You MUST read the entire `.agents/` directory (including all files in `.agents/rules/` and `.agents/skills/`) and `AGENTS.md` before making any edits or running test commands. This ensures absolute alignment with the project's custom guidelines.
 - **Analyze Existing Project Goals:** For existing or legacy codebases, you MUST read the codebase structure, main classes, and related documentation (e.g., `README.md`, configurations) to clarify what the project is doing and its overall goals.
 - **Dynamic Context Updates:** Do not treat your understanding of the codebase or tasks as static defaults. Always adapt and update this context dynamically based on the user's latest instructions and active requirements.
 - Read existing codebase files relating to the task first.

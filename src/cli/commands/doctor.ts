@@ -89,6 +89,24 @@ npx agent-workflow-kit-cli doctor || exit 1
       } else if (stack === "fastapi") {
         console.log(chalk.gray("Running: ruff check ."));
         await execa("ruff", ["check", "."], { cwd, stdio: "inherit" });
+      } else if (stack === "python-ai") {
+        let cmd = "ruff";
+        let args = ["check", "."];
+        try {
+          const hasPoetry = await fs.stat(path.join(cwd, "poetry.lock")).then(s => s.isFile()).catch(() => false);
+          if (hasPoetry) {
+            cmd = "poetry";
+            args = ["run", "python", "-m", "ruff", "check", "."];
+          } else {
+            const hasPipenv = await fs.stat(path.join(cwd, "Pipfile")).then(s => s.isFile()).catch(() => false);
+            if (hasPipenv) {
+              cmd = "pipenv";
+              args = ["run", "python", "-m", "ruff", "check", "."];
+            }
+          }
+        } catch {}
+        console.log(chalk.gray(`Running: ${cmd} ${args.join(" ")}`));
+        await execa(cmd, args, { cwd, stdio: "inherit" });
       } else if (stack === "react-ts") {
         console.log(chalk.gray("Running: npx tsc --noEmit"));
         await execa("npx", ["tsc", "--noEmit"], { cwd, stdio: "inherit" });
