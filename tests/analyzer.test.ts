@@ -132,4 +132,24 @@ spring:
     expect(sb?.springApplicationName).toBe("order-service");
     expect(sb?.serverPort).toBe("8087");
   });
+
+  it("should analyze python-ai properties and dependencies correctly", async () => {
+    // Write pyproject.toml with poetry dependencies
+    await fs.writeFile(
+      path.join(tmpDir, "pyproject.toml"),
+      "[tool.poetry.dependencies]\ntorch = '^2.1.0'\nopencv-python = '*'",
+      "utf8"
+    );
+    // Write poetry.lock file to trigger poetry
+    await fs.writeFile(path.join(tmpDir, "poetry.lock"), "", "utf8");
+
+    const context = await analyzeModule(tmpDir, ["python-ai"]);
+    const ai = context["python-ai"];
+
+    expect(ai).toBeDefined();
+    expect(ai?.packageManager).toBe("poetry");
+    expect(ai?.runCommand).toBe("poetry run python");
+    expect(ai?.hasGpuLibraries).toBe(true);
+    expect(ai?.hasHardwareLibraries).toBe(true);
+  });
 });

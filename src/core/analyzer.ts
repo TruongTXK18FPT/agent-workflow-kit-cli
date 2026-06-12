@@ -31,10 +31,18 @@ export interface FastAPIContext {
   runCommand: string;
 }
 
+export interface PythonAiContext {
+  packageManager: "pip" | "poetry" | "pipenv";
+  runCommand: string;
+  hasGpuLibraries: boolean;
+  hasHardwareLibraries: boolean;
+}
+
 export interface AnalysisContext {
   "spring-boot"?: SpringBootContext;
   "react-ts"?: ReactTsContext;
   "fastapi"?: FastAPIContext;
+  "python-ai"?: PythonAiContext;
 }
 
 /**
@@ -456,6 +464,52 @@ async function analyzeFastApi(dir: string): Promise<FastAPIContext> {
 }
 
 /**
+ * Analyzes Python AI project details.
+ */
+async function analyzePythonAi(dir: string): Promise<PythonAiContext> {
+  let packageManager: "pip" | "poetry" | "pipenv" = "pip";
+  let runCommand = "python";
+  let hasGpuLibraries = false;
+  let hasHardwareLibraries = false;
+
+  try {
+    const hasPoetry = await fs.stat(path.join(dir, "poetry.lock")).then((s) => s.isFile()).catch(() => false);
+    const hasPipenv = await fs.stat(path.join(dir, "Pipfile")).then((s) => s.isFile()).catch(() => false);
+
+    if (hasPoetry) {
+      packageManager = "poetry";
+      runCommand = "poetry run python";
+    } else if (hasPipenv) {
+      packageManager = "pipenv";
+      runCommand = "pipenv run python";
+    }
+  } catch {
+    // Use default
+  }
+
+  // Scan requirements / pyproject to check for GPU and Hardware references
+  const checkGpuKws = ["torch", "tensorflow", "cuda", "onnxruntime-gpu"];
+  const checkHwKws = ["opencv-python", "mediapipe", "pyserial", "pyaudio", "picamera", "opencv"];
+
+  const buildFiles = ["requirements.txt", "pyproject.toml", "Pipfile"];
+  for (const file of buildFiles) {
+    try {
+      const content = await fs.readFile(path.join(dir, file), "utf8");
+      if (checkGpuKws.some(kw => content.includes(kw))) {
+        hasGpuLibraries = true;
+      }
+      if (checkHwKws.some(kw => content.includes(kw))) {
+        hasHardwareLibraries = true;
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  return { packageManager, runCommand, hasGpuLibraries, hasHardwareLibraries };
+}
+
+/**
  * Entry point to analyze module configurations.
  */
 export async function analyzeModule(dir: string, stacks: ProjectStack[]): Promise<AnalysisContext> {
@@ -468,6 +522,8 @@ export async function analyzeModule(dir: string, stacks: ProjectStack[]): Promis
       context["react-ts"] = await analyzeReactTs(dir);
     } else if (stack === "fastapi") {
       context["fastapi"] = await analyzeFastApi(dir);
+    } else if (stack === "python-ai") {
+      context["python-ai"] = await analyzePythonAi(dir);
     }
   }
 

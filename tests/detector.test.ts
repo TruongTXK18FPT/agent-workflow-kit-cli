@@ -54,6 +54,17 @@ describe("Stack Detector", () => {
     expect(stacks).toContain("fastapi");
   });
 
+  it("should detect python-ai if requirements.txt contains AI libraries", async () => {
+    await fs.writeFile(
+      path.join(tmpDir, "requirements.txt"),
+      "torch==2.1.2\nopencv-python==4.8.1.78\nnumpy>=1.24",
+      "utf8"
+    );
+
+    const stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("python-ai");
+  });
+
   it("should detect monorepo structure with subdirectories", async () => {
     // Write react-ts in apps/frontend
     const subDir = path.join(tmpDir, "frontend");

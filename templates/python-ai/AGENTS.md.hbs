@@ -1,0 +1,36 @@
+## 🐍 Python AI & Hardware-Integrated Guidelines
+
+### 🔄 End-to-End Agent Development Lifecycle
+AI Agents must execute all tasks following this structured 5-stage lifecycle:
+1. **Design & Code**: Implement pipeline, model, or agent code according to the modular directories below. Keep components stateless and thread-safe.
+2. **Comprehensive Testing**: Write unit tests to check input/output array shapes, verify parameter validation, and mock external API/LLM calls.
+3. **Troubleshooting & Debugging**: When diagnosing errors (like CUDA OOM or camera blockages), load and follow the `@ai-debug` skill workflow.
+4. **Code Quality & Review**: Perform a thorough self-review against `@ai-style.md` (for reproducibility, memory bounds, and prompt segregation). If working on video/hardware integrations, also conform strictly to `@ai-hardware.md`.
+5. **Edge & Production Optimization**: Verify weights quantization, thread safety, and resource cleanups before shipping model scripts.
+
+### 🏗️ Architecture & Directory Conventions
+Organize AI, data preprocessing, and model code in a modular package layout:
+
+```text
+src/
+  data/          # Dataset processing pipelines (cleaning, tokenization)
+  models/        # Model architectures (PyTorch, TensorFlow wrappers)
+  agents/        # LLM workflows, prompts, and agent tools registry
+  training/      # Training and fine-tuning routines
+  inference/     # Inference pipelines or API deployment logic
+notebooks/       # Jupyter/IPython notebooks for EDA and experiments
+configs/         # YAML/JSON configurations for hyperparameters
+```
+
+### ⚙️ Coding Guidelines
+- **Reproducibility**: Set random seeds globally using the helper in `@ai-style.md` for any code creating data splits or training networks.
+- **Resource Management**: Release camera streams (`cv2.VideoCapture`) or serial port interfaces inside `finally` blocks or using context managers.
+- **Thread Safety**: Process high-frequency video frames or sensor inputs on a separate thread; exchange frames using thread-safe queues.
+
+### 🧪 Verification & Linting Pipeline
+Before completing any task, run the following verification commands in the project directory:
+
+```bash
+{{runCommand}} ruff check .
+{{runCommand}} -m pytest
+```

@@ -6,7 +6,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-export type ProjectStack = "spring-boot" | "react-ts" | "fastapi";
+export type ProjectStack = "spring-boot" | "react-ts" | "fastapi" | "python-ai";
 
 /**
  * Scans a specific folder directly for manifest configurations.
@@ -56,12 +56,28 @@ async function detectProjectStackDirect(cwd: string): Promise<ProjectStack[]> {
     // Ignore
   }
 
-  // 3. Detect Python FastAPI (pyproject.toml or requirements.txt containing fastapi)
+  // 3. Detect Python FastAPI & Python AI
+  const aiKeywords = [
+    "torch",
+    "tensorflow",
+    "scikit-learn",
+    "transformers",
+    "langchain",
+    "llama-index",
+    "opencv-python",
+    "mediapipe",
+    "numpy",
+    "pandas"
+  ];
+
   try {
     const pyprojectPath = path.join(cwd, "pyproject.toml");
     const content = await fs.readFile(pyprojectPath, "utf8");
     if (content.includes("fastapi")) {
       stacks.push("fastapi");
+    }
+    if (aiKeywords.some(kw => content.includes(kw))) {
+      stacks.push("python-ai");
     }
   } catch {
     try {
@@ -69,6 +85,9 @@ async function detectProjectStackDirect(cwd: string): Promise<ProjectStack[]> {
       const content = await fs.readFile(reqPath, "utf8");
       if (content.includes("fastapi")) {
         stacks.push("fastapi");
+      }
+      if (aiKeywords.some(kw => content.includes(kw))) {
+        stacks.push("python-ai");
       }
     } catch {
       // Ignore
