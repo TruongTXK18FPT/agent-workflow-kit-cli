@@ -152,4 +152,56 @@ spring:
     expect(ai?.hasGpuLibraries).toBe(true);
     expect(ai?.hasHardwareLibraries).toBe(true);
   });
+
+  it("should analyze react-ts lock files and return correct execute command context", async () => {
+    // 1. Check npm default (no lock file)
+    let context = await analyzeModule(tmpDir, ["react-ts"]);
+    let react = context["react-ts"];
+    expect(react).toBeDefined();
+    expect(react?.packageManager).toBe("npm");
+    expect(react?.runCommand).toBe("npm run");
+    expect(react?.executeCommand).toBe("npx");
+    expect(react?.lockFile).toBe("package-lock.json");
+
+    // 2. Check pnpm lock detection
+    await fs.writeFile(path.join(tmpDir, "pnpm-lock.yaml"), "", "utf8");
+    context = await analyzeModule(tmpDir, ["react-ts"]);
+    react = context["react-ts"];
+    expect(react?.packageManager).toBe("pnpm");
+    expect(react?.runCommand).toBe("pnpm");
+    expect(react?.executeCommand).toBe("pnpm dlx");
+    expect(react?.lockFile).toBe("pnpm-lock.yaml");
+    await fs.unlink(path.join(tmpDir, "pnpm-lock.yaml"));
+
+    // 3. Check bun lockb detection
+    await fs.writeFile(path.join(tmpDir, "bun.lockb"), "", "utf8");
+    context = await analyzeModule(tmpDir, ["react-ts"]);
+    react = context["react-ts"];
+    expect(react?.packageManager).toBe("bun");
+    expect(react?.runCommand).toBe("bun run");
+    expect(react?.executeCommand).toBe("bunx");
+    expect(react?.lockFile).toBe("bun.lockb");
+    await fs.unlink(path.join(tmpDir, "bun.lockb"));
+  });
+
+  it("should analyze next-js, nestjs, and express context correctly", async () => {
+    await fs.writeFile(path.join(tmpDir, "package-lock.json"), "", "utf8");
+    const context = await analyzeModule(tmpDir, ["next-js", "nestjs", "express"]);
+    
+    expect(context["next-js"]).toBeDefined();
+    expect(context["next-js"]?.packageManager).toBe("npm");
+    expect(context["next-js"]?.runCommand).toBe("npm run");
+    expect(context["next-js"]?.executeCommand).toBe("npx");
+    expect(context["next-js"]?.lockFile).toBe("package-lock.json");
+
+    expect(context["nestjs"]).toBeDefined();
+    expect(context["nestjs"]?.packageManager).toBe("npm");
+    expect(context["nestjs"]?.lockFile).toBe("package-lock.json");
+
+    expect(context["express"]).toBeDefined();
+    expect(context["express"]?.packageManager).toBe("npm");
+    expect(context["express"]?.lockFile).toBe("package-lock.json");
+    
+    await fs.unlink(path.join(tmpDir, "package-lock.json"));
+  });
 });

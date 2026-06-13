@@ -1,0 +1,59 @@
+## Next.js + TypeScript Guidelines
+
+### 🔄 End-to-End Agent Development Lifecycle
+AI Agents must execute all Next.js tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Implement pages and components following App Router conventions. Default to React Server Components (RSC).
+2. **Comprehensive Testing:** Write unit tests for business utilities and page/component behavior using Jest or Vitest.
+3. **Code Quality & Validation:** Verify and execute validations:
+   - Linting check: `{{runCommand}} lint`
+   - Type checking: `{{runCommand}} typecheck`
+   - Unit tests: `{{runCommand}} test` (or `{{runCommand}} test -- --run` in CI/CD)
+   - Production build: `{{runCommand}} build`
+4. **Dependency Management:** Install new packages using `{{packageManager}} add [package_name]` (or `npm install [package_name]` if using npm). Never manually modify the lock file `{{lockFile}}`.
+
+---
+
+### 🏗️ Architecture & Route Conventions
+Follow the App Router modular layout under `app/`. Keep routing folders clean and encapsulate route assets or pages within them:
+
+```text
+app/
+  (auth)/               # Route Group for authentication
+    login/
+      page.tsx          # Login page UI component
+      layout.tsx        # Login layout component
+  (dashboard)/          # Route Group for dashboard pages
+    dashboard/
+      page.tsx
+  blog/
+    [id]/               # Dynamic Route
+      page.tsx
+  api/
+    route.ts            # Route Handler (API Endpoint)
+```
+
+Refer to specialized guideline files for detailed rules:
+- Code Conventions & Folders: `@next-style.md`
+- Server vs Client Components: `@server-client-components.md`
+- Data Fetching & Server Actions: `@data-fetching-mutations.md`
+- SEO & Semantic Elements: `@seo-metadata.md`
+
+---
+
+### 🏛️ Rendering Paradigm
+- **React Server Components (RSC)**: By default, all files in the `app/` folder must be React Server Components.
+- **React Client Components (RCC)**: Isolate client logic. Only place the `"use client"` directive on leaf components that require interactivity (e.g. form handlers, event buttons, local state, browser-only hooks).
+
+---
+
+### 🔄 Data Fetching & Mutations
+- **Fetching at the Source**: Perform `fetch()` directly inside async Server Components to utilize automatic cache optimization and secure database/API keys.
+- **Server Actions**: Manage data modifications (POST, PUT, DELETE) exclusively using Server Actions (`"use server"`).
+- **Responsive UX**: Wrap form responses using `useActionState` (or `useFormState`) and wrap mutative transitions inside `useTransition` to prevent the UI from freezing.
+
+---
+
+### ⚡ Optimization & SEO
+- **Image Optimization**: Never use raw `<img>` tags. Use `<Image />` from `next/image` with dimensions or `fill`, adding `priority` for above-the-fold content.
+- **Navigation Optimization**: Use `<Link />` from `next/link` to enable background pre-fetching when the element enters the viewport.
+- **SEO Metadata**: Define static SEO metadata or implement `generateMetadata` dynamically for dynamic routes to optimize search engine crawling.

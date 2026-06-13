@@ -1,0 +1,85 @@
+## NestJS + TypeScript Guidelines
+
+### 🔄 End-to-End Agent Development Lifecycle
+AI Agents must execute all NestJS tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Implement layers following Module-driven conventions. Keep controllers thin and place logic in Services.
+2. **Comprehensive Testing:** Write unit tests for services using mocks (`.spec.ts`) and end-to-end (E2E) integration tests using Supertest.
+3. **Code Quality & Validation:** Verify and execute validations:
+   - Linting check: `{{runCommand}} lint`
+   - Type checking: `{{runCommand}} typecheck`
+   - Unit tests: `{{runCommand}} test` (or `{{runCommand}} test -- --run` in CI/CD)
+   - Production build: `{{runCommand}} build`
+4. **Dependency Management:** Install new packages using `{{packageManager}} add [package_name]` (or `npm install [package_name]` if using npm). Never manually modify the lock file `{{lockFile}}`.
+
+---
+
+### 🏗️ Architecture & Module Conventions
+NestJS enforces a strictly **Module-Driven** architecture. Structure each module folder to encapsulate its internal controllers, services, guards, and entity layers:
+
+```text
+src/
+  auth/
+    dto/
+      login-request.dto.ts
+    entities/
+      user.entity.ts
+    guards/
+      roles.guard.ts
+    auth.module.ts
+    auth.controller.ts
+    auth.service.ts
+```
+
+Refer to specialized guideline files for detailed rules:
+- Naming & Coding Style: `@nestjs-style.md`
+- Module Boundaries & Dependency Injection: `@module-architecture.md`
+- Input Validation & Exception Filters: `@validation-errors.md`
+
+---
+
+### 💉 Dependency Injection (DI)
+- **No Property Injection**: Do not use the `@Inject()` decorator directly on class properties unless injecting a custom string/symbol token.
+- **Constructor Injection**: Always resolve dependency injections via the class constructor using `private readonly` access modifiers:
+  ```typescript
+  @Injectable()
+  export class AuthService {
+    constructor(private readonly usersService: UsersService) {}
+  }
+  ```
+
+---
+
+### 🛡️ Input Validation & DTOs
+- **DTOs Required**: Declare all request payloads (`@Body()`, `@Query()`, `@Param()`) using explicit DTO classes decorated with `class-validator` markers.
+- **Global Validation Pipe**: Activate a global validation pipe in `main.ts` to automatically strip unwhitelisted fields and parse types:
+  ```typescript
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+  ```
+
+---
+
+### 🚨 Unified Exception Handling
+- **No raw exceptions**: Never expose raw system exceptions (like database errors or parsing stack traces) to the client.
+- **HTTP Exceptions**: Catch errors at the Service layer and throw appropriate NestJS HTTP exceptions (`NotFoundException`, `BadRequestException`, `ForbiddenException`).
+- **Global Filter**: Map errors consistently using a global Exception Filter to format output JSON payloads:
+  ```json
+  {
+    "success": false,
+    "statusCode": 404,
+    "timestamp": "2026-06-13T06:48:24.000Z",
+    "path": "/api/v1/courses/999",
+    "message": "Course does not exist."
+  }
+  ```
+
+---
+
+### 🧪 Testing Standards
+- **Unit Tests**: Place tests in `.spec.ts` files adjacent to code. Mock dependencies using mock providers or mock interfaces.
+- **E2E Tests**: Implement integration flow tests in `.e2e-spec.ts` files inside a separate test setup folder. Execute them using `supertest`.

@@ -6,7 +6,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-export type ProjectStack = "spring-boot" | "react-ts" | "fastapi" | "python-ai";
+export type ProjectStack = "spring-boot" | "react-ts" | "next-js" | "nestjs" | "express" | "fastapi" | "python-ai";
 
 /**
  * Scans a specific folder directly for manifest configurations.
@@ -41,16 +41,31 @@ async function detectProjectStackDirect(cwd: string): Promise<ProjectStack[]> {
     }
   }
 
-  // 2. Detect React + TypeScript (package.json containing react dependency)
+  // 2. Detect Node.js / JavaScript / TypeScript stacks (React, Next.js, NestJS, Express)
   try {
     const pkgPath = path.join(cwd, "package.json");
     const content = await fs.readFile(pkgPath, "utf8");
     const pkgJson = JSON.parse(content);
-    const hasReact =
-      (pkgJson.dependencies && pkgJson.dependencies.react) ||
-      (pkgJson.devDependencies && pkgJson.devDependencies.react);
-    if (hasReact) {
+    
+    const deps = pkgJson.dependencies || {};
+    const devDeps = pkgJson.devDependencies || {};
+
+    const hasReact = deps.react || devDeps.react;
+    const hasNext = deps.next || devDeps.next;
+    const hasNest = deps["@nestjs/core"] || devDeps["@nestjs/core"];
+    const hasExpress = deps.express || devDeps.express;
+
+    if (hasNext) {
+      stacks.push("next-js");
+    } else if (hasReact) {
       stacks.push("react-ts");
+    }
+
+    const hasNestConfig = await fs.stat(path.join(cwd, "nest-cli.json")).then((s) => s.isFile()).catch(() => false);
+    if (hasNest || hasNestConfig) {
+      stacks.push("nestjs");
+    } else if (hasExpress) {
+      stacks.push("express");
     }
   } catch {
     // Ignore

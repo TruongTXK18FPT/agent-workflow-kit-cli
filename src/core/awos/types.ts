@@ -17,7 +17,7 @@ export interface TestingStrategy {
 }
 
 export interface RepositoryContext {
-  stack: 'spring-boot' | 'react-ts' | 'fastapi' | 'python-ai' | 'custom' | string;
+  stack: 'spring-boot' | 'react-ts' | 'next-js' | 'nestjs' | 'express' | 'fastapi' | 'python-ai' | 'custom' | string;
   architecture: 'clean-architecture' | 'feature-first' | 'vertical-slice' | 'layered' | 'ddd-lite' | string;
   modules: ModuleBoundary[];
   testing: TestingStrategy;

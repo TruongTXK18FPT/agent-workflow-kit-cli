@@ -107,7 +107,12 @@ npx agent-workflow-kit-cli doctor || exit 1
         } catch {}
         console.log(chalk.gray(`Running: ${cmd} ${args.join(" ")}`));
         await execa(cmd, args, { cwd, stdio: "inherit" });
-      } else if (stack === "react-ts") {
+      } else if (
+        stack === "react-ts" ||
+        stack === "next-js" ||
+        stack === "nestjs" ||
+        stack === "express"
+      ) {
         console.log(chalk.gray("Running: npx tsc --noEmit"));
         await execa("npx", ["tsc", "--noEmit"], { cwd, stdio: "inherit" });
       }

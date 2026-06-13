@@ -1,0 +1,56 @@
+## Express.js + TypeScript Guidelines
+
+### 🔄 End-to-End Agent Development Lifecycle
+AI Agents must execute all Express.js tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Implement layers following standard 3-tier MVC architecture. Never write spaghetti code.
+2. **Comprehensive Testing:** Write unit tests for services using Jest and integration tests using Supertest.
+3. **Code Quality & Validation:** Verify and execute validations:
+   - Linting check: `{{runCommand}} lint`
+   - Type checking: `{{runCommand}} typecheck`
+   - Unit tests: `{{runCommand}} test` (or `{{runCommand}} test -- --run` in CI/CD)
+   - Production build: `{{runCommand}} build`
+4. **Dependency Management:** Install new packages using `{{packageManager}} add [package_name]` (or `npm install [package_name]` if using npm). Never manually modify the lock file `{{lockFile}}`.
+
+---
+
+### 🏗️ Architecture & Folder Conventions
+To avoid spaghetti code, separate concerns strictly into a 3-tier layout:
+
+```text
+src/
+  config/               # Environment variables, database configs
+  middlewares/          # Request interceptors (auth, zod validation, loggers)
+  models/               # Database schemas (Mongoose, Sequelize, Prisma)
+  routes/               # HTTP route declarations and middleware bindings
+  controllers/          # Request/response coordinators
+  services/             # 100% of the core business logic and database writes
+  utils/                # Global helper utilities
+  app.ts                # Application startup file
+```
+
+Refer to specialized guideline files for detailed rules:
+- Naming & Code Styles: `@express-style.md`
+- Routing & Controller Boundaries: `@router-controller.md`
+- Async Error Catching & Global Handler: `@error-handling.md`
+
+---
+
+### 🏛️ Strict Layer Separation
+Maintain a strict data flow pipeline:
+$$\text{Client} \longrightarrow \text{Router} \longrightarrow \text{Middleware} \longrightarrow \text{Controller} \longrightarrow \text{Service} \longrightarrow \text{Model/Database}$$
+- **Router**: Mapping routes only. No business or coordination logic.
+- **Controller**: Extract payloads (`req.body`, `req.query`, `req.params`), call the Service, and return response payloads using `res.status().json()`. Do not call the DB models directly.
+- **Service**: 100% database queries and calculations. Never reference Express's `req` or `res` objects.
+
+---
+
+### 🚨 Async Error Handling
+- **No raw controller try/catch**: Do not duplicate try/catch blocks across controllers.
+- **Async Wrapper**: Wrap all async controller functions in a custom handler wrapper (e.g. `express-async-handler` or custom helper) to automatically forward exceptions to `next(error)`.
+- **Global Error Handler**: Declare a global error boundary middleware at the bottom of the middleware chain in `app.ts` to format JSON payloads consistently.
+
+---
+
+### 🛡️ Schema-Driven Request Validation
+- **No manual check**: Do not write if-statement validator conditions in controllers.
+- **Zod Middleware**: Use **Zod** schema schemas loaded dynamically inside a custom middleware to validate request payloads before they reach the controllers.

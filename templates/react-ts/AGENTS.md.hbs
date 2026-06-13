@@ -1,47 +1,124 @@
 ## React + TypeScript Guidelines
 
-### Architecture & Feature Conventions
-Use a feature-first structure. Keep route wiring thin, and place feature UI, hooks, data clients, and types together:
+### 🔄 End-to-End Agent Development Lifecycle
+AI Agents must execute all React + TypeScript tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Implement components and logic following the guidelines below. Keep logic inside Custom Hooks.
+2. **Comprehensive Testing:** Write component tests using React Testing Library and hook tests for complex behavior.
+3. **Code Quality & Validation:** Perform self-review and execute dynamic linter, type checks, and tests:
+   - Linting check: `{{runCommand}} lint`
+   - Type checking: `{{runCommand}} typecheck`
+   - Unit tests: `{{runCommand}} test` (or `{{runCommand}} test -- --run` in CI/CD)
+   - Production build: `{{runCommand}} build`
+4. **Dependency Management:** Install new packages using `{{packageManager}} add [package_name]` (or `npm install [package_name]` if using npm). Never manually modify the lock file `{{lockFile}}`.
+
+---
+
+### 🏗️ Architecture & Feature Conventions
+Use a strict **feature-first** modular packaging layout. Keep routing modules thin, and place feature UI, custom hooks, services, types, and tests together within the feature module:
 
 ```text
 src/
-  app/                  # App shell, router, providers
+  app/                  # App shell, router, context providers
   features/
     billing/
-      components/
+      components/       # Feature-specific components
         BillingPanel.tsx
-      hooks/
+      hooks/            # Feature-specific custom hooks (queries, state)
         useBilling.ts
-      services/
+      services/         # API clients and data transformers
         billingClient.ts
-      types.ts
-      index.ts
-  shared/
+      types/            # Feature type definitions
+        billing.ts
+      __tests__/        # Component and hook unit tests
+        BillingPanel.test.tsx
+      index.ts          # Public API for this feature
+  shared/               # Core shared assets, hooks, components, utils
     components/
     hooks/
     utils/
 ```
 
-### Component, Hook, and State Rules
-- Components render UI and delegate fetching, subscriptions, timers, and other side effects to custom hooks.
-- Custom hooks own reusable stateful logic and must start with `use`.
-- Prefer local component state for isolated interactions.
-- Use Context API for low-frequency cross-tree state such as theme, auth session, or app configuration.
-- Use Zustand only for shared state with frequent updates or cross-feature coordination.
-- Keep feature state close to the feature before moving it to `shared/`.
+---
 
-### TypeScript Standards
-- Use strict TypeScript. Avoid `any`; prefer explicit domain types and discriminated unions.
-- Define feature-local interfaces and types near the code that owns them.
-- Export from feature `index.ts` files only when another module needs the API.
-- Use absolute imports from `@/`; do not add deep relative imports like `../../`.
+### 🎨 Aesthetics, Styling & Premium UI
+The UI must feel premium, modern, and cohesive.
+- **Strict Tailwind CSS usage**: Never write inline custom CSS. Build the interface entirely using Tailwind Utility Classes.
+- **Dynamic Classes helper**: Never use string interpolation to join dynamic classNames. Always use the `cn()` helper (combining `clsx` and `tailwind-merge`):
+  ```typescript
+  // src/utils/cn.ts
+  import { ClassValue, clsx } from "clsx";
+  import { twMerge } from "tailwind-merge";
 
-### Testing & Verification
-Before completing a React + TypeScript change, run the project validation pipeline:
+  export function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+  }
+  ```
+  Usage:
+  `className={cn("px-4 py-2 text-white transition-all", isActive ? "bg-blue-500" : "bg-gray-500", customClass)}`
+- **Mobile-First Design**: Design layouts for mobile by default. Use breakpoints (`sm:`, `md:`, `lg:`, `xl:`) only to add or modify responsive styles as viewport size increases.
+- **Micro-animations & Motion**: Use `framer-motion` (or equivalent core transition library) for physical state changes:
+  - Transition duration should be short (between `0.2s` and `0.3s`).
+  - Use natural easing curves (`easeOut`, `easeInOut`) or spring physics for buttons/modals.
+  - Wrap conditional components in `<AnimatePresence>` to execute smooth exit animations.
 
-```bash
-npm run lint
-npm run typecheck
-npm run test -- --run
-npm run build
-```
+---
+
+### 🌐 Asynchronous Server-State & API Call Conventions
+- **No raw useEffect Fetching**: Never fetch data using raw `useEffect` blocks.
+- **Centralized API Client**: Route all outgoing requests through a unified client instance (e.g. `src/lib/api-client.ts`) that manages baseURL, interceptors, auth token inclusion, and global error mappings.
+- **Asynchronous Server-State**: Manage all server state using **TanStack Query (React Query)** or **SWR**.
+- **Separation of Concerns**: UI components must only call custom query hooks and render UI based on three states (`isLoading`, `isError`, and `data`). All fetching, caching, and mutation logic must be kept inside custom hooks:
+  ```typescript
+  // src/features/roadmap/api/use-roadmap.ts
+  import { useQuery } from "@tanstack/react-query";
+  import { apiClient } from "@/lib/api-client";
+
+  export const useRoadmap = (roadmapId: string) => {
+    return useQuery({
+      queryKey: ["roadmaps", roadmapId],
+      queryFn: async () => {
+        const response = await apiClient.get(`/roadmaps/${roadmapId}`);
+        return response.data;
+      },
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+    });
+  };
+  ```
+
+---
+
+### 📝 Forms & Schema Validation
+Forms must remain performant and prevent rendering bottleneck.
+- **React Hook Form**: Manage form states with React Hook Form to isolate re-rendering and ensure smooth typing.
+- **Controller integration**: For complex third-party elements (Rich Text Editors, selectors, etc.), wrap them in the RHF `<Controller>` component.
+- **Schema-Driven Validation**: Avoid raw if/else statements for input validation. Use **Zod** to declare data schemas and automatically resolve validator rules:
+  ```typescript
+  import { useForm } from "react-hook-form";
+  import { zodResolver } from "@hookform/resolvers/zod";
+  import * as z from "zod";
+
+  const loginSchema = z.object({
+    email: z.string().min(1, "Email cannot be empty").email("Invalid email format"),
+    password: z.string().min(8, "Password must contain at least 8 characters"),
+  });
+  ```
+
+---
+
+### ⚡ Routing & Code Splitting
+Optimizing bundle loading performance is mandatory.
+- **Code Splitting**: Do not statically import Page Components. Use `React.lazy()` to segment routes into separate chunks loaded only when the route is visited.
+- **Premium Loading**: Wrap all lazy-loaded route elements inside a `<Suspense>` boundary containing a premium Shimmer Skeleton loader or spinner.
+- **Centralized Data Routers**: Configure routes using `createBrowserRouter` (React Router v6+) instead of JSX tags.
+- **Loaders & Actions**: Fetch data parallel to route transitions using router Loaders, and manage data mutations via router Actions.
+- **Route Error Boundaries**: Specify an `errorElement` on all primary route branches to isolate crashes and show a dedicated recovery panel instead of freezing the entire application.
+
+---
+
+### 🔍 SEO & Accessibility (a11y)
+- **Dynamic SEO Metadata**: Update document metadata (`title`, `description`, Open Graph tags) on route changes using `react-helmet-async`.
+- **Semantic HTML5 Structure**: Restructure elements using semantic tags: `<header>`, `<nav>`, `<main>`, `<section>`, `<article>`, `<footer>`. Ensure heading tags (`<h1>` to `<h6>`) follow logical hierarchy.
+- **Accessible Images**: All `<img>` tags must possess an `alt` attribute. Provide descriptive alt text for informative images; write `alt=""` for purely decorative images so screen readers skip them.
+- **Icon-Only Controls**: Buttons or links containing only SVG icons (e.g. close buttons, like buttons) must have an explicit `aria-label` or `aria-labelledby` attribute.
+- **Visual Keyboard Focus**: Do not disable the browser focus outline without adding a custom indicator. Interactable elements must display a distinct ring when navigated via keyboard (`:focus-visible`, e.g. `focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none`).

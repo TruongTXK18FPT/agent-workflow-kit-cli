@@ -24,7 +24,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 interface InitOptions {
-  stack: "auto" | "spring-boot" | "react-ts" | "fastapi";
+  stack: "auto" | "spring-boot" | "react-ts" | "next-js" | "nestjs" | "express" | "fastapi" | "python-ai";
   agent: "both" | "codex" | "antigravity";
   dryRun: boolean;
 }

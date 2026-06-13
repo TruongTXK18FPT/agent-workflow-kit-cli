@@ -168,17 +168,29 @@ export async function buildRepositoryContext(workspaceRoot: string): Promise<Rep
   let architecture = "layered";
   if (mainStack === "spring-boot") {
     architecture = "clean-architecture";
-  } else if (mainStack === "react-ts") {
+  } else if (mainStack === "react-ts" || mainStack === "next-js") {
     architecture = "feature-first";
+  } else if (mainStack === "nestjs") {
+    architecture = "module-driven";
+  } else if (mainStack === "express") {
+    architecture = "layered";
   } else if (mainStack === "fastapi") {
     architecture = "vertical-slice";
   }
 
   // Testing strategy defaults
   const frameworks: string[] = [];
-  if (mainStack === "react-ts") frameworks.push("vitest", "testing-library");
-  else if (mainStack === "spring-boot") frameworks.push("junit", "mockito");
-  else if (mainStack === "fastapi") frameworks.push("pytest");
+  if (mainStack === "react-ts") {
+    frameworks.push("vitest", "testing-library");
+  } else if (mainStack === "next-js") {
+    frameworks.push("jest", "playwright");
+  } else if (mainStack === "nestjs" || mainStack === "express") {
+    frameworks.push("jest", "supertest");
+  } else if (mainStack === "spring-boot") {
+    frameworks.push("junit", "mockito");
+  } else if (mainStack === "fastapi") {
+    frameworks.push("pytest");
+  }
 
   const testing: TestingStrategy = {
     frameworks,
@@ -189,8 +201,10 @@ export async function buildRepositoryContext(workspaceRoot: string): Promise<Rep
   const validationLibraries: string[] = [];
   if (mainStack === "spring-boot") {
     validationLibraries.push("jakarta.validation");
-  } else if (mainStack === "react-ts") {
+  } else if (mainStack === "react-ts" || mainStack === "next-js" || mainStack === "express") {
     validationLibraries.push("zod");
+  } else if (mainStack === "nestjs") {
+    validationLibraries.push("class-validator");
   } else if (mainStack === "fastapi") {
     validationLibraries.push("pydantic");
   }

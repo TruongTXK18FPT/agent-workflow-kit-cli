@@ -127,4 +127,43 @@ describe("Stack Detector", () => {
     expect(names).toContain("apps/sub/web");
     expect(names).toContain("services/nested/payment");
   });
+
+  it("should detect next-js, nestjs, and express correctly", async () => {
+    // 1. Next.js (react and next)
+    await fs.writeFile(
+      path.join(tmpDir, "package.json"),
+      JSON.stringify({ dependencies: { react: "^19.0.0", next: "^15.0.0" } }),
+      "utf8"
+    );
+    let stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("next-js");
+    expect(stacks).not.toContain("react-ts");
+
+    // 2. NestJS (via @nestjs/core)
+    await fs.writeFile(
+      path.join(tmpDir, "package.json"),
+      JSON.stringify({ dependencies: { "@nestjs/core": "^10.0.0" } }),
+      "utf8"
+    );
+    stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("nestjs");
+    expect(stacks).not.toContain("express");
+
+    // 3. NestJS (via nest-cli.json fallback)
+    await fs.writeFile(path.join(tmpDir, "package.json"), "{}", "utf8");
+    await fs.writeFile(path.join(tmpDir, "nest-cli.json"), "{}", "utf8");
+    stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("nestjs");
+    await fs.unlink(path.join(tmpDir, "nest-cli.json"));
+
+    // 4. Express (via express)
+    await fs.writeFile(
+      path.join(tmpDir, "package.json"),
+      JSON.stringify({ dependencies: { express: "^4.0.0" } }),
+      "utf8"
+    );
+    stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("express");
+    expect(stacks).not.toContain("nestjs");
+  });
 });

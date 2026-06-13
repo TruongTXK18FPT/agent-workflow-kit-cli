@@ -27,7 +27,7 @@ interface AddOptions {
 
 export async function runAdd(stack: string, options: AddOptions) {
   const targetStack = stack.toLowerCase();
-  const validStacks = ["spring-boot", "react-ts", "fastapi", "python-ai"];
+  const validStacks = ["spring-boot", "react-ts", "next-js", "nestjs", "express", "fastapi", "python-ai"];
   if (!validStacks.includes(targetStack)) {
     console.error(
       chalk.red(

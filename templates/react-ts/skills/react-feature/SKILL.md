@@ -15,11 +15,11 @@ Steps:
 2. Define feature-local types first, including loading, error, empty, and success state shapes.
 3. Create or update the custom hook that owns fetching, side effects, derived state, and cleanup.
 4. Create or update PascalCase components that render UI and delegate logic to hooks.
-5. Add styles using the project's existing styling approach; do not introduce a new styling system.
+5. Add styles using Tailwind CSS utility classes and Framer Motion for micro-animations; do not write custom inline CSS.
 6. Wire the feature into the route or parent component through the smallest public API needed.
 7. Add tests for component behavior and hook logic when branching, async work, or cleanup is present.
 8. Run validations:
-   - `npm run lint`
-   - `npm run typecheck`
-   - `npm run test -- --run`
-   - `npm run build`
+   - `{{runCommand}} lint`
+   - `{{runCommand}} typecheck`
+   - `{{runCommand}} test`
+   - `{{runCommand}} build`

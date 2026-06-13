@@ -22,8 +22,31 @@ export interface SpringBootContext {
 }
 
 export interface ReactTsContext {
-  packageManager: "npm" | "yarn" | "pnpm";
+  packageManager: "npm" | "yarn" | "pnpm" | "bun";
   runCommand: string;
+  executeCommand: string;
+  lockFile: string;
+}
+
+export interface NextJsContext {
+  packageManager: "npm" | "yarn" | "pnpm" | "bun";
+  runCommand: string;
+  executeCommand: string;
+  lockFile: string;
+}
+
+export interface NestJsContext {
+  packageManager: "npm" | "yarn" | "pnpm" | "bun";
+  runCommand: string;
+  executeCommand: string;
+  lockFile: string;
+}
+
+export interface ExpressContext {
+  packageManager: "npm" | "yarn" | "pnpm" | "bun";
+  runCommand: string;
+  executeCommand: string;
+  lockFile: string;
 }
 
 export interface FastAPIContext {
@@ -41,6 +64,9 @@ export interface PythonAiContext {
 export interface AnalysisContext {
   "spring-boot"?: SpringBootContext;
   "react-ts"?: ReactTsContext;
+  "next-js"?: NextJsContext;
+  "nestjs"?: NestJsContext;
+  "express"?: ExpressContext;
   "fastapi"?: FastAPIContext;
   "python-ai"?: PythonAiContext;
 }
@@ -417,25 +443,38 @@ async function analyzeSpringBoot(dir: string): Promise<SpringBootContext> {
  * Analyzes React TypeScript project details.
  */
 async function analyzeReactTs(dir: string): Promise<ReactTsContext> {
-  let packageManager: "npm" | "yarn" | "pnpm" = "npm";
+  let packageManager: "npm" | "yarn" | "pnpm" | "bun" = "npm";
   let runCommand = "npm run";
+  let executeCommand = "npx";
+  let lockFile = "package-lock.json";
 
   try {
     const hasYarnLock = await fs.stat(path.join(dir, "yarn.lock")).then((s) => s.isFile()).catch(() => false);
     const hasPnpmLock = await fs.stat(path.join(dir, "pnpm-lock.yaml")).then((s) => s.isFile()).catch(() => false);
+    const hasBunLockb = await fs.stat(path.join(dir, "bun.lockb")).then((s) => s.isFile()).catch(() => false);
+    const hasBunLock = await fs.stat(path.join(dir, "bun.lock")).then((s) => s.isFile()).catch(() => false);
 
     if (hasYarnLock) {
       packageManager = "yarn";
       runCommand = "yarn";
+      executeCommand = "yarn dlx";
+      lockFile = "yarn.lock";
     } else if (hasPnpmLock) {
       packageManager = "pnpm";
       runCommand = "pnpm";
+      executeCommand = "pnpm dlx";
+      lockFile = "pnpm-lock.yaml";
+    } else if (hasBunLockb || hasBunLock) {
+      packageManager = "bun";
+      runCommand = "bun run";
+      executeCommand = "bunx";
+      lockFile = hasBunLockb ? "bun.lockb" : "bun.lock";
     }
   } catch {
     // Use default
   }
 
-  return { packageManager, runCommand };
+  return { packageManager, runCommand, executeCommand, lockFile };
 }
 
 /**
@@ -510,6 +549,45 @@ async function analyzePythonAi(dir: string): Promise<PythonAiContext> {
 }
 
 /**
+ * Analyzes Next.js project details.
+ */
+async function analyzeNextJs(dir: string): Promise<NextJsContext> {
+  const ctx = await analyzeReactTs(dir);
+  return {
+    packageManager: ctx.packageManager,
+    runCommand: ctx.runCommand,
+    executeCommand: ctx.executeCommand,
+    lockFile: ctx.lockFile,
+  };
+}
+
+/**
+ * Analyzes NestJS project details.
+ */
+async function analyzeNestJs(dir: string): Promise<NestJsContext> {
+  const ctx = await analyzeReactTs(dir);
+  return {
+    packageManager: ctx.packageManager,
+    runCommand: ctx.runCommand,
+    executeCommand: ctx.executeCommand,
+    lockFile: ctx.lockFile,
+  };
+}
+
+/**
+ * Analyzes Express.js project details.
+ */
+async function analyzeExpress(dir: string): Promise<ExpressContext> {
+  const ctx = await analyzeReactTs(dir);
+  return {
+    packageManager: ctx.packageManager,
+    runCommand: ctx.runCommand,
+    executeCommand: ctx.executeCommand,
+    lockFile: ctx.lockFile,
+  };
+}
+
+/**
  * Entry point to analyze module configurations.
  */
 export async function analyzeModule(dir: string, stacks: ProjectStack[]): Promise<AnalysisContext> {
@@ -520,6 +598,12 @@ export async function analyzeModule(dir: string, stacks: ProjectStack[]): Promis
       context["spring-boot"] = await analyzeSpringBoot(dir);
     } else if (stack === "react-ts") {
       context["react-ts"] = await analyzeReactTs(dir);
+    } else if (stack === "next-js") {
+      context["next-js"] = await analyzeNextJs(dir);
+    } else if (stack === "nestjs") {
+      context["nestjs"] = await analyzeNestJs(dir);
+    } else if (stack === "express") {
+      context["express"] = await analyzeExpress(dir);
     } else if (stack === "fastapi") {
       context["fastapi"] = await analyzeFastApi(dir);
     } else if (stack === "python-ai") {
