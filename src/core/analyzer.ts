@@ -68,6 +68,17 @@ export interface DotnetContext {
   testProjects: string[];
 }
 
+export interface GolangContext {
+  goVersion: string;
+  moduleName: string;
+}
+
+export interface RustContext {
+  projectName: string;
+  rustEdition: string;
+  isWorkspace: boolean;
+}
+
 export interface AnalysisContext {
   "spring-boot"?: SpringBootContext;
   "react-ts"?: ReactTsContext;
@@ -77,6 +88,8 @@ export interface AnalysisContext {
   "fastapi"?: FastAPIContext;
   "python-ai"?: PythonAiContext;
   "dotnet"?: DotnetContext;
+  "golang"?: GolangContext;
+  "rust"?: RustContext;
 }
 
 /**
@@ -618,6 +631,10 @@ export async function analyzeModule(dir: string, stacks: ProjectStack[]): Promis
       context["python-ai"] = await analyzePythonAi(dir);
     } else if (stack === "dotnet") {
       context["dotnet"] = await analyzeDotnet(dir);
+    } else if (stack === "golang") {
+      context["golang"] = await analyzeGolang(dir);
+    } else if (stack === "rust") {
+      context["rust"] = await analyzeRust(dir);
     }
   }
 
@@ -707,4 +724,71 @@ async function findCsprojFiles(dir: string): Promise<string[]> {
   }
   await traverse(dir);
   return files;
+}
+
+async function analyzeGolang(dir: string): Promise<GolangContext> {
+  let goVersion = "1.22";
+  let moduleName = path.basename(dir);
+
+  try {
+    const goModPath = path.join(dir, "go.mod");
+    const content = await fs.readFile(goModPath, "utf8");
+    const lines = content.split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("module ")) {
+        moduleName = trimmed.replace("module ", "").trim();
+      } else if (trimmed.startsWith("go ")) {
+        goVersion = trimmed.replace("go ", "").trim();
+      }
+    }
+  } catch {
+    // Keep default
+  }
+
+  return { goVersion, moduleName };
+}
+
+async function analyzeRust(dir: string): Promise<RustContext> {
+  let projectName = path.basename(dir);
+  let rustEdition = "2021";
+  let isWorkspace = false;
+
+  try {
+    const cargoTomlPath = path.join(dir, "Cargo.toml");
+    const content = await fs.readFile(cargoTomlPath, "utf8");
+    if (content.includes("[workspace]")) {
+      isWorkspace = true;
+    }
+    
+    // Very basic parsing for name and edition
+    const lines = content.split("\n");
+    let inPackageSection = false;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("[package]")) {
+        inPackageSection = true;
+      } else if (trimmed.startsWith("[")) {
+        inPackageSection = false;
+      }
+
+      if (inPackageSection) {
+        if (trimmed.startsWith("name")) {
+          const match = trimmed.match(/name\s*=\s*"(.*)"/);
+          if (match && match[1]) {
+            projectName = match[1];
+          }
+        } else if (trimmed.startsWith("edition")) {
+          const match = trimmed.match(/edition\s*=\s*"(.*)"/);
+          if (match && match[1]) {
+            rustEdition = match[1];
+          }
+        }
+      }
+    }
+  } catch {
+    // Keep default
+  }
+
+  return { projectName, rustEdition, isWorkspace };
 }

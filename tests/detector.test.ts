@@ -183,5 +183,17 @@ describe("Stack Detector", () => {
     stacks = await detectProjectStack(tmpDir);
     expect(stacks).toContain("dotnet");
     await fs.unlink(path.join(tmpDir, "global.json"));
+
+    // 8. golang (via go.mod)
+    await fs.writeFile(path.join(tmpDir, "go.mod"), "module test", "utf8");
+    stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("golang");
+    await fs.unlink(path.join(tmpDir, "go.mod"));
+
+    // 9. rust (via Cargo.toml)
+    await fs.writeFile(path.join(tmpDir, "Cargo.toml"), "[package]", "utf8");
+    stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("rust");
+    await fs.unlink(path.join(tmpDir, "Cargo.toml"));
   });
 });

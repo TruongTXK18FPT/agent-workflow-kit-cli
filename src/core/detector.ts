@@ -6,7 +6,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-export type ProjectStack = "spring-boot" | "react-ts" | "next-js" | "nestjs" | "express" | "fastapi" | "python-ai" | "dotnet";
+export type ProjectStack = "spring-boot" | "react-ts" | "next-js" | "nestjs" | "express" | "fastapi" | "python-ai" | "dotnet" | "golang" | "rust";
 
 /**
  * Scans a specific folder directly for manifest configurations.
@@ -132,6 +132,28 @@ async function detectProjectStackDirect(cwd: string): Promise<ProjectStack[]> {
     );
     if (hasDotnet) {
       stacks.push("dotnet");
+    }
+  } catch {
+    // Ignore
+  }
+
+  // 5. Detect Golang (go.mod)
+  try {
+    const goModPath = path.join(cwd, "go.mod");
+    const stat = await fs.stat(goModPath);
+    if (stat.isFile()) {
+      stacks.push("golang");
+    }
+  } catch {
+    // Ignore
+  }
+
+  // 6. Detect Rust (Cargo.toml)
+  try {
+    const cargoTomlPath = path.join(cwd, "Cargo.toml");
+    const stat = await fs.stat(cargoTomlPath);
+    if (stat.isFile()) {
+      stacks.push("rust");
     }
   } catch {
     // Ignore

@@ -244,4 +244,39 @@ spring:
     expect(dotnet?.projectNames).toContain("MyProject");
     expect(dotnet?.testProjects).toContain("MyProject.Tests");
   });
+
+  it("should analyze golang projects correctly", async () => {
+    const goModContent = `module github.com/user/my-go-app
+
+go 1.22.4
+`;
+    await fs.writeFile(path.join(tmpDir, "go.mod"), goModContent, "utf8");
+
+    const context = await analyzeModule(tmpDir, ["golang"]);
+    const golang = context["golang"];
+
+    expect(golang).toBeDefined();
+    expect(golang?.moduleName).toBe("github.com/user/my-go-app");
+    expect(golang?.goVersion).toBe("1.22.4");
+  });
+
+  it("should analyze rust projects correctly", async () => {
+    const cargoContent = `[package]
+name = "my-rust-app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = "1.0"
+`;
+    await fs.writeFile(path.join(tmpDir, "Cargo.toml"), cargoContent, "utf8");
+
+    const context = await analyzeModule(tmpDir, ["rust"]);
+    const rust = context["rust"];
+
+    expect(rust).toBeDefined();
+    expect(rust?.projectName).toBe("my-rust-app");
+    expect(rust?.rustEdition).toBe("2021");
+    expect(rust?.isWorkspace).toBe(false);
+  });
 });
