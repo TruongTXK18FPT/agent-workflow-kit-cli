@@ -1,28 +1,28 @@
-# Quy Chuẩn Xử Lý Lỗi Trong Golang
+# Golang Error Handling Standards
 
-Tài liệu này quy định các quy tắc nghiêm ngặt về bắt lỗi, bọc lỗi (error wrapping) và thiết kế cấu trúc lỗi nghiệp vụ chuẩn hóa.
+This document defines strict guidelines for error checking, error wrapping, and structuring standard API errors.
 
 ---
 
-## 🔄 Bọc Lỗi Kèm Ngữ Cảnh (Error Wrapping)
-- **Quy tắc:** Khi chuyển tiếp một lỗi từ tầng thấp hơn (như Database) lên tầng cao hơn (như UseCase), cấm trả về lỗi thô trực tiếp hoặc tạo lỗi mới làm mất dấu vết (Stacktrace).
-- **Giải pháp:** Sử dụng động từ `%w` trong `fmt.Errorf` để bọc lỗi nguyên bản.
+## 🔄 Error Wrapping
+- **Rule:** When passing errors up the stack (e.g., from Repository to UseCase), never return the raw error or create a new error that discards the trace.
+- **Solution:** Use `%w` in `fmt.Errorf` to wrap the underlying error with contextual information:
 ```go
 if err != nil {
     return fmt.Errorf("failed to fetch user from db (id: %d): %w", id, err)
 }
 ```
-- **Kiểm tra lỗi:** Sử dụng `errors.Is()` để so sánh giá trị lỗi (Sentinel Error) và `errors.As()` để ép kiểu lỗi sang custom error struct.
+- **Checking Errors:** Use `errors.Is()` for comparing sentinel errors and `errors.As()` to extract custom error structures:
 ```go
 if errors.Is(err, sql.ErrNoRows) {
-    // Xử lý trường hợp không tìm thấy dữ liệu
+    // Handle record not found
 }
 ```
 
 ---
 
-## 🏛️ Cấu Trúc Lỗi Nghiệp Vụ Chuẩn Hóa (Custom Errors)
-Để trả về lỗi đồng nhất cho các hệ thống Frontend/Mobile hoặc API Gateway, AI phải sử dụng cấu trúc `AppError` sau:
+## 🏛️ Standard Custom Errors
+To return uniform error responses to Frontend clients or API Gateways, define a standard struct:
 ```go
 type AppError struct {
     Code    string            `json:"code"`
@@ -37,6 +37,6 @@ func (e *AppError) Error() string {
 
 ---
 
-## 🚫 Cấm Sử Dụng Panic
-- **Nghiêm cấm:** Tuyệt đối không sử dụng `panic` và `recover` cho các luồng xử lý lỗi thông thường.
-- **Trường hợp ngoại lệ:** Chỉ dùng `panic` khi ứng dụng gặp lỗi cấu hình chí mạng lúc khởi động (ví dụ: không thể kết nối tới cơ sở dữ liệu chính hoặc port bị chiếm dụng).
+## 🚫 Avoid Panics
+- **Strict Rule:** Never use `panic` and `recover` for normal business flow control or expected failures.
+- **Exception:** Only use `panic` during application startup if a fatal dependency fails (e.g., cannot connect to the primary database, or port is already in use).

@@ -1,24 +1,24 @@
 ---
 name: dotnet-controller
-description: Sinh hoặc mở rộng một API Controller ASP.NET Core mới cùng DTOs, FluentValidation và Service interface tương ứng
+description: Scaffold or extend an ASP.NET Core API Controller with corresponding DTOs, FluentValidation, and Service interfaces
 ---
 
-Tuân thủ quy trình này để tạo mới một API Endpoint hoặc Controller trong .NET (C#).
+Follow this process to generate a new API Endpoint or Controller in .NET (C#).
 
-Đầu vào (Inputs):
-- controllerName: Tên của Controller (ví dụ: `CoursesController`)
-- routePath: Tuyến định tuyến HTTP (ví dụ: `api/v1/courses`)
-- requestDtoName: Tên lớp Request DTO (ví dụ: `CreateCourseRequestDto`)
-- functionality: Tóm tắt yêu cầu nghiệp vụ và các phương thức cần xử lý
+Inputs:
+- controllerName: Name of the Controller (e.g., `CoursesController`)
+- routePath: HTTP route mapping (e.g., `api/v1/courses`)
+- requestDtoName: Class name of the request DTO (e.g., `CreateCourseRequestDto`)
+- functionality: Summary of the business requirements and methods to process
 
-Các bước thực hiện (Steps):
-1. Khai báo các lớp Request/Response DTOs tương ứng bên trong tầng Application (hoặc thư mục `DTOs` của dự án).
-2. Xây dựng một lớp Validator kế thừa từ `AbstractValidator<T>` bằng FluentValidation bên dưới Application layer để kiểm tra ràng buộc dữ liệu.
-3. Định nghĩa Service Interface (ví dụ: `ICourseService`) và lớp triển khai cụ thể (`CourseService`) ở tầng Application/Core để xử lý business logic.
-4. Đăng ký Service nghiệp vụ vừa tạo vào Dependency Injection container (Scoped lifetime) trong file `Program.cs`.
-5. Tạo lớp Controller kế thừa từ `ControllerBase` được đánh dấu bằng các attribute `[ApiController]` và `[Route]`.
-6. Sử dụng Constructor Injection để tiêm Service Interface vào Controller và gọi phương thức xử lý thích hợp, ánh xạ kết quả trả về thông qua các `IActionResult` (như `Ok()`, `Created()`, `BadRequest()`).
-7. Viết unit test cho Service và Controller bằng xUnit và Moq.
-8. Chạy kiểm tra lỗi biên dịch cục bộ:
+Steps:
+1. Declare the corresponding Request/Response DTO classes inside the Application layer (or the project's `DTOs` directory).
+2. Create a Validator class inheriting from FluentValidation's `AbstractValidator<T>` in the Application layer to define data constraints.
+3. Define the Service Interface (e.g., `ICourseService`) and its concrete implementation class (`CourseService`) in the Application layer to handle business logic.
+4. Register the new Service in the Dependency Injection container (using Scoped lifetime) inside the `Program.cs` configuration file.
+5. Create the Controller class inheriting from `ControllerBase`, decorated with `[ApiController]` and `[Route]` attributes.
+6. Use Constructor Injection to inject the Service Interface into the Controller, delegate request processing, and map responses to appropriate `IActionResult` objects (e.g., `Ok()`, `Created()`, `BadRequest()`).
+7. Write unit tests for the Service and Controller using xUnit and Moq.
+8. Execute compilation and testing:
    - `dotnet build`
    - `dotnet test`

@@ -1,36 +1,36 @@
-# Xử Lý Lỗi Và Độ Tin Cậy Trong Rust
+# Error Handling & Fault Control in Rust
 
-Tài liệu này quy định các nguyên tắc nghiêm ngặt về quản lý lỗi, lan truyền lỗi và cách áp dụng các thư viện lỗi chuẩn hóa.
-
----
-
-## 🚫 Nghiêm Cấm Lạm Dụng Panic
-- **Quy tắc:** Tuyệt đối không sử dụng `panic!`, `.unwrap()`, hoặc `.expect()` trong code production chạy chính. Việc này sẽ làm sập tiến trình Web Server ngoài ý muốn khi gặp lỗi runtime.
-- **Trường hợp ngoại lệ:** Chỉ được phép sử dụng `panic!` hoặc `.unwrap()` trong:
-  - Mã nguồn kiểm thử (Tests).
-  - Khởi tạo ban đầu (Bootstrapping / CLI setup) khi thiếu cấu hình nghiêm trọng.
-  - Các khối code đã chứng minh được về mặt logic là không bao giờ có thể xảy ra lỗi (Invariants).
+This document defines strict rules for handling, wrapping, and propagating failures using idiomatic Rust patterns.
 
 ---
 
-## 🔄 Trả Về Result Và Sử Dụng Toán Tử `?`
-- Toàn bộ luồng logic nghiệp vụ bình thường phải trả về kiểu dữ liệu `Result<T, E>` hoặc `Option<T>`.
-- Sử dụng toán tử `?` để lan truyền lỗi lên tầng cao hơn một cách tự nhiên và sạch sẽ.
+## 🚫 Avoid Panics in Production
+- **Strict Rule:** Never use `panic!`, `.unwrap()`, or `.expect()` in production application code. Doing so triggers process termination, resulting in service interruption.
+- **Exceptions:** Only use panics in:
+  - Unit and Integration Tests.
+  - Initial bootstrapping (e.g., parsing critical files at startup) when missing items make recovery impossible.
+  - Invariants where the logic guarantees a failure is impossible.
 
 ---
 
-## 📚 Hệ Sinh Thái Thư Viện Lỗi: `thiserror` vs `anyhow`
-Cấm kết hợp hoặc sử dụng bừa bãi hai thư viện lỗi này. AI phải tuân thủ phân cấp:
-- **Dùng `thiserror` cho tầng Thư viện hoặc Domain Modules:** Định nghĩa kiểu lỗi rõ ràng, kiểu dữ liệu mạnh (Strongly Typed) cho từng trường hợp lỗi cụ thể.
+## 🔄 Result Propagation with the `?` Operator
+- All fallible business logic operations must return `Result<T, E>` or `Option<T>`.
+- Use the `?` operator to propagate errors up the call stack, maintaining a clean syntax.
+
+---
+
+## 📚 Error Libraries: `thiserror` vs `anyhow`
+Never mix these libraries arbitrarily. Comply with the following separation:
+- **Use `thiserror` for Library Crates / Domain Modules:** Creates strongly-typed, detailed error definitions with custom display messages.
 ```rust
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum DatabaseError {
-    #[error("Không tìm thấy người dùng có ID {0}")]
+    #[error("User not found with ID {0}")]
     UserNotFound(i64),
-    #[error("Lỗi kết nối cơ sở dữ liệu gốc: {0}")]
+    #[error("Database connection failure: {0}")]
     ConnectionFailed(String),
 }
 ```
-- **Dùng `anyhow` cho tầng Ứng dụng (Application Entry / API Gateway / CLI commands):** Nơi không cần phân tách chi tiết kiểu lỗi mà cần gộp tất cả các loại lỗi từ các tầng thư viện lại để log và hiển thị nhanh ra bên ngoài.
+- **Use `anyhow` for Application Entrypoints (API Gateway / CLI main):** Ideal for general error grouping and stack propagation without complex type mapping.

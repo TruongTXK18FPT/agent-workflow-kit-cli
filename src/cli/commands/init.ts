@@ -216,7 +216,9 @@ export async function runInit(options: InitOptions) {
         "No standard stacks detected automatically. Creating general agent guidelines at root."
       )
     );
+    const globalRules = await readStaticTemplateFile("common/GLOBAL_RULES.md").catch(() => "");
     const finalAgentsContent = await renderTemplate("common/AGENTS.md.hbs", {
+      globalRules,
       stackContent: "",
     });
 
@@ -257,7 +259,9 @@ export async function runInit(options: InitOptions) {
       monorepoContent += `- **${mod.name}** (${mod.stacks.join(", ")}): Stack rules and guidelines are located at [${mod.name}/${targetFileName}](file:///${mod.dir.replace(/\\/g, "/")}/${targetFileName})\n`;
     }
 
+    const globalRules = await readStaticTemplateFile("common/GLOBAL_RULES.md").catch(() => "");
     const rootAgentsContent = await renderTemplate("common/AGENTS.md.hbs", {
+      globalRules,
       stackContent: monorepoContent.trim(),
     });
 
@@ -341,7 +345,9 @@ export async function runInit(options: InitOptions) {
     // Render agent files for this module
     const geminiPath = path.join(mod.dir, "GEMINI.md");
     const agentsPath = path.join(mod.dir, "AGENTS.md");
+    const globalRules = await readStaticTemplateFile("common/GLOBAL_RULES.md").catch(() => "");
     const moduleAgentsContent = await renderTemplate("common/AGENTS.md.hbs", {
+      globalRules,
       stackContent,
     });
 

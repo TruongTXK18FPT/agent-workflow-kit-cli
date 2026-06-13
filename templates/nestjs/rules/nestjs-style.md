@@ -1,16 +1,16 @@
-# Quy Ước Đặt Tên & Coding Style cho NestJS
+# NestJS Naming Conventions & Coding Style
 
-Tài liệu này hướng dẫn coding style chuẩn TypeScript, quy tắc đặt tên tệp tin và lớp trong NestJS.
+This document outlines standard guidelines for TypeScript coding styles, filename notations, and class naming conventions in NestJS.
 
 ---
 
-## 🏷️ Quy Ước Đặt Tên (Naming Conventions)
+## 🏷️ Naming Conventions
 
-### Kỹ thuật Đặt Tên Tệp (Dot Notation)
-Tất cả các tệp tin trong NestJS phải tuân thủ nghiêm ngặt định dạng cấu trúc: `<tên-đối-tượng>.<loại-cấu-phần>.ts`.
+### Filename Notation (Dot Notation)
+All filenames in NestJS must strictly comply with the following format: `<name>.<type>.ts`.
 
 ```bash
-# Thư mục module luôn dùng số nhiều hoặc số ít đồng nhất (Ví dụ: auth, users, products)
+# Module directories should use consistent singular or plural names (e.g., auth, users, products)
 src/users/
 ├── users.module.ts
 ├── users.controller.ts
@@ -26,8 +26,8 @@ src/users/
     └── logging.interceptor.ts
 ```
 
-### Quy ước đặt tên Lớp (Class Naming)
-Tên lớp phải được viết theo định dạng PascalCase và kết thúc bằng tên cụ thể của loại cấu phần đó:
+### Class Naming
+Class names must use `PascalCase` and end with the specific component suffix representing their role:
 - **Controller:** `src/auth/auth.controller.ts` $\rightarrow$ `export class AuthController {}`
 - **Service:** `src/auth/auth.service.ts` $\rightarrow$ `export class AuthService {}`
 - **Module:** `src/auth/auth.module.ts` $\rightarrow$ `export class AuthModule {}`
@@ -35,7 +35,7 @@ Tên lớp phải được viết theo định dạng PascalCase và kết thúc
 
 ---
 
-## 📦 TypeScript & Sắp Xếp Decorator
-- **Sắp xếp Decorator:** Nhóm và sắp xếp các decorator một cách khoa học. Các decorator định nghĩa phương thức HTTP (`@Get()`, `@Post()`) nằm trên cùng, tiếp theo là cấu hình bảo mật hoặc kiểm duyệt đầu vào (`@UseGuards()`, `@UseInterceptors()`).
-- **Kiểu trả về tường minh:** Khai báo kiểu trả về rõ ràng cho tất cả các phương thức trong Controller và Service để bảo đảm tính chặt chẽ của kiểu dữ liệu.
-- **Nghiêm cấm kiểu dữ liệu `any`:** Luôn khai báo class hoặc interface tương ứng cho các tham số và kết quả xử lý.
+## 📦 TypeScript & Decorator Sorting
+- **Decorator Sorting:** Group and organize decorator annotations systematically. Place HTTP methods (`@Get()`, `@Post()`) on top, followed by guards or interceptors (`@UseGuards()`, `@UseInterceptors()`).
+- **Explicit Return Types:** Always define clear return types for all Controller and Service methods to guarantee type safety.
+- **Strictly Ban the `any` Type:** Avoid generic `any` keywords. Create proper classes, interfaces, or types for all arguments and responses.

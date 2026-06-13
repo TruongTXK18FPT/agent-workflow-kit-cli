@@ -1,21 +1,21 @@
-# Cấu Trúc Dự Án & Tổ Chức Module Trong Rust
+# Rust Crate Layout & Modular Architecture
 
-Tài liệu này quy định cách phân chia module, ranh giới Crate, cấu trúc Cargo Workspace và Dependency Injection chuẩn trong Rust.
-
----
-
-## 🏗️ Cấu Trúc Module & Crate (Binary/Library Separation)
-- **Tách biệt binary và library:** 
-  - `src/main.rs`: Điểm khởi chạy của dự án binary. Chỉ thực hiện parse cấu hình, nạp môi trường và khởi chạy server.
-  - `src/lib.rs`: Chứa toàn bộ logic nghiệp vụ cốt lõi, có thể tái sử dụng và kiểm thử độc lập.
-- **Quản lý tầm nhìn (Visibility Control):** Tuyệt đối không lạm dụng việc khai báo `pub`. Ưu tiên sử dụng `pub(crate)` để giới hạn quyền truy cập các cấu phần nội bộ bên trong cùng một Crate. Giữ phạm vi công khai (`pub`) ở mức tối giản nhất để duy trì tính đóng gói.
+This document defines module structures, visibility scopes, Cargo Workspace configurations, and dependency injection in Rust.
 
 ---
 
-## 📦 Cargo Workspaces (Đa Crate)
-Đối với các hệ thống lớn có cấu trúc monorepo hoặc chia thành nhiều thành phần độc lập, bắt buộc chia nhỏ dự án thành một Cargo Workspace chứa các Crate riêng biệt:
+## 🏗️ Modules & Crate Separation
+- **Separating Binary & Library:**
+  - `src/main.rs`: Entrypoint of the binary application. Responsible only for parsing arguments, reading configuration, and starting the runtime.
+  - `src/lib.rs`: Holds 100% of the core business logic, enabling testability and decoupling.
+- **Visibility Scope Control:** Do not expose symbols using `pub` indiscriminately. Prefer `pub(crate)` to limit access to within the same crate, maintaining strict encapsulation.
+
+---
+
+## 📦 Cargo Workspaces (Multi-Crate Monorepos)
+For large monorepo systems, split the project into a Cargo Workspace containing isolated crates to enable parallel compilation:
 ```toml
-# File Cargo.toml ở thư mục gốc của dự án
+# Cargo.toml at the root directory
 [workspace]
 members = [
     "crates/api-gateway",
@@ -27,8 +27,8 @@ members = [
 
 ---
 
-## 💉 Dependency Injection Bằng Trait (Trait-Based DI)
-Do cơ chế quản lý lifetimes và borrow checker khắt khe của Rust, việc tiêm phụ thuộc lỏng lẻo bắt buộc phải sử dụng **Traits** kết hợp với con trỏ thông minh an toàn đa luồng `Arc<dyn Trait + Send + Sync>`:
+## 💉 Trait-Based Dependency Injection (DI)
+Due to Rust's strict lifetimes and borrow checker, decouple dependencies by implementing **Traits** combined with thread-safe smart pointers: `Arc<dyn Trait + Send + Sync>`.
 ```rust
 use std::sync::Arc;
 
@@ -37,7 +37,7 @@ pub trait UserRepository: Send + Sync {
 }
 
 pub struct UserService {
-    // Tiêm phụ thuộc lỏng qua con trỏ thông minh Arc mã hóa động
+    // Thread-safe pointer to dynamic trait implementation
     repo: Arc<dyn UserRepository>,
 }
 

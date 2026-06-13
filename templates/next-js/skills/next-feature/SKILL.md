@@ -1,25 +1,25 @@
 ---
 name: next-feature
-description: Sinh hoặc mở rộng một page hoặc route handler Next.js + TypeScript mới kèm caching và metadata
+description: Generate or extend a new Next.js + TypeScript page or route handler with caching and metadata
 ---
 
-Tuân thủ quy trình này để tạo một page, layout hoặc API route handler mới trong Next.js.
+Follow this process to generate a new page, layout, or API route handler in Next.js.
 
-Đầu vào (Inputs):
-- featureName: Tên của route hoặc trang (ví dụ: `dashboard`)
-- targetPath: Thư mục chứa route bên trong `app/` để triển khai
-- userFlow: Mô tả tóm tắt hành vi và bố cục giao diện của trang
+Inputs:
+- featureName: Name of the route or page (e.g., `dashboard`)
+- targetPath: The directory inside the `app/` folder to implement the route
+- userFlow: Brief description of the page behavior and layout
 
-Các bước thực hiện (Steps):
-1. Quét các thư mục lân cận trong `app/` để tham chiếu các layout chung và ranh giới xử lý lỗi (`error.tsx`).
-2. Thiết lập cấu trúc thư mục route theo chuẩn Next.js (ví dụ: `app/(dashboard)/billing`).
-3. Khai báo interface cho route params và query parameters.
-4. Triển khai cấu trúc trang hoặc layout dưới dạng **React Server Component (RSC)**.
-5. Nếu có tương tác người dùng hoặc form, hãy tách thành các component con cấp lá (RCC) được đánh dấu `"use client"` rồi import vào RSC.
-6. Thiết lập cơ chế cache rõ ràng cho toàn bộ các thao tác gọi dữ liệu `fetch()`.
-7. Cấu hình metadata tĩnh hoặc động thông qua hàm `generateMetadata`.
-8. Định nghĩa file xử lý lỗi cục bộ (`error.tsx`) tại thư mục route gần nhất để bắt lỗi runtime.
-9. Thực hiện kiểm tra lỗi cục bộ:
+Steps:
+1. Scan neighboring directories in the `app/` folder to check for shared layouts and error boundaries (`error.tsx`).
+2. Set up the route directory structure according to Next.js standards (e.g., `app/(dashboard)/billing`).
+3. Declare TypeScript interfaces for route parameters and query parameters.
+4. Implement the page or layout structure as a **React Server Component (RSC)**.
+5. If user interaction or form handling is needed, isolate it in a leaf Client Component (RCC) marked with `"use client"` and import it into the parent RSC.
+6. Configure explicit caching parameters for all data fetching `fetch()` calls.
+7. Set up static or dynamic SEO metadata using the `generateMetadata` function.
+8. Define a local error handler file (`error.tsx`) in the route directory to catch runtime exceptions.
+9. Execute local validation:
    - `{{runCommand}} lint`
    - `{{runCommand}} typecheck`
    - `{{runCommand}} test`

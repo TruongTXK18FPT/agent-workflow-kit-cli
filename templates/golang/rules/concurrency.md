@@ -1,26 +1,25 @@
-# Quy Chuẩn Đồng Thời & Quản Lý Bộ Nhớ Trong Go
+# Golang Concurrency & Memory Allocation
 
-Tài liệu này quy định các quy tắc quản lý Goroutine, lan truyền Context, phòng ngừa Race Conditions và tối ưu hóa cấp phát bộ nhớ.
+This document outlines standard guidelines for goroutines, context propagation, race conditions, and heap allocation optimizations.
 
 ---
 
-## 🧠 Tối Ưu Hóa Phân Tích Thoát (Escape Analysis & Memory)
-Go compiler tự động phân tích xem một biến nên nằm ở Stack (rất nhanh, tự giải phóng) hay Heap (phải nhờ Garbage Collector dọn dẹp).
-- **Quy tắc con trỏ (*):** Chỉ trả về con trỏ khi struct có kích thước lớn (tránh copy tốn chi phí) hoặc cần sửa trực tiếp dữ liệu gốc của đối tượng.
-- **Tránh Heap Allocation:** Với các struct nhỏ (dưới 64-128 bytes) hoặc cấu hình ngắn hạn, trả về dạng giá trị (Value Type) để giữ biến nằm trên Stack.
+## 🧠 Escape Analysis & Allocations
+The Go compiler determines if a variable should live on the Stack (fast, auto-allocated/deallocated) or Heap (garbage-collected).
+- **Pointer Rule (*):** Return pointers only for large structs where value copying is expensive, or when you must modify the receiver's state directly.
+- **Value Types for Small Structs:** For small configuration values or short-lived structs (under 64-128 bytes), return value types to keep allocations on the Stack.
 ```go
-// ❌ Khiến biến bị đẩy lên Heap (Bad)
+// ❌ Forces heap allocation (Bad)
 func NewConfig() *Config {
     return &Config{Timeout: 30}
 }
 
-// ✔️ Giữ biến trên Stack (Good)
+// ✔️ Keeps allocation on the Stack (Good)
 func NewConfig() Config {
     return Config{Timeout: 30}
 }
 ```
-
-- **Sử dụng sync.Pool:** Đối với các tác vụ lặp lại liên tục ở tần suất cao như Json Encode/Decode hoặc cấp phát mảng byte đệm (`[]byte`), bắt buộc sử dụng `sync.Pool` để tái sử dụng bộ nhớ, giảm tải cho Garbage Collector (GC).
+- **sync.Pool Usage:** For high-frequency, repetitive operations like JSON encoding/decoding or byte buffer allocation (`[]byte`), use `sync.Pool` to reuse memory, minimizing GC pressure.
 ```go
 var bufferPool = sync.Pool{
     New: func() any {
@@ -31,21 +30,21 @@ var bufferPool = sync.Pool{
 
 ---
 
-## 🚦 Ngăn Ngừa Rò Rỉ Goroutine (Goroutine Leaks)
-- **Quy tắc:** Khi gửi dữ liệu vào channel trong Goroutine, channel đó phải có kích thước buffer phù hợp hoặc được giám sát bởi cơ chế Timeout/Context.
+## 🚦 Prevent Goroutine Leaks
+- **Rule:** When writing data to a channel inside an independent goroutine, ensure the channel has a buffer or is monitored with timeouts/contexts to prevent permanent blocking.
 ```go
-// ❌ Gây rò rỉ nếu không có ai đọc từ ch (Bad)
+// ❌ Leaks goroutine if no reader reads from ch (Bad)
 func FetchData() string {
     ch := make(chan string) // Unbuffered channel
     go func() {
-        ch <- doHeavyWork() // Block vĩnh viễn ở đây nếu hàm cha thoát sớm
+        ch <- doHeavyWork() // Blocks indefinitely if parent exits early
     }()
     return <-ch
 }
 
-// ✔️ An toàn với Buffer hoặc Context Select (Good)
+// ✔️ Safe with Buffer and Context (Good)
 func FetchData(ctx context.Context) (string, error) {
-    ch := make(chan string, 1) // Buffered channel chống block
+    ch := make(chan string, 1) // Buffered channel avoids blocking
     go func() {
         ch <- doHeavyWork()
     }()
@@ -54,19 +53,19 @@ func FetchData(ctx context.Context) (string, error) {
     case res := <-ch:
         return res, nil
     case <-ctx.Done():
-        return "", ctx.Err() // Thoát an toàn khi timeout
+        return "", ctx.Err() // Exits safely on timeout/cancel
     }
 }
 ```
 
 ---
 
-## 🧭 Lan Truyền Context (Context Propagation)
-- Bắt buộc truyền `ctx context.Context` làm tham số đầu tiên của các hàm liên quan đến I/O (SQL, API ngoài, Redis).
-- Tuyệt đối không lưu trữ Context bên trong một Struct; Context phải được truyền tường minh qua đối số hàm (Explicit Argument).
+## 🧭 Context Propagation
+- Pass `ctx context.Context` as the first argument to any functions handling network or filesystem operations.
+- Never store Context inside a struct; pass it explicitly down the call chain.
 
 ---
 
-## ⚡ Phòng Chống Race Conditions
-Mọi đoạn mã sử dụng nhiều Goroutine truy cập vào cùng một vùng nhớ phải được bảo vệ bằng `sync.Mutex`, `sync.RWMutex`, hoặc package `sync/atomic`.
-- Bắt buộc chạy kiểm tra tranh chấp bộ nhớ khi chạy thử: `go test -race ./...`.
+## ⚡ Prevent Race Conditions
+Protect shared variables accessed concurrently across multiple goroutines using `sync.Mutex`, `sync.RWMutex`, or `sync/atomic`.
+- Run race detection during testing: `go test -race ./...`.

@@ -1,24 +1,24 @@
 ---
 name: nestjs-module
-description: Tự động sinh trọn bộ cấu phần gồm Module, Controller, Service, DTO, Entity theo đúng chuẩn hệ thống NestJS
+description: Automatically scaffold a complete NestJS Module including Controller, Service, DTO, and Entity according to standard conventions
 ---
 
-Tuân thủ quy trình này để tạo mới một Module NestJS hoặc mở rộng một mô-đun hiện có.
+Follow this process to generate a new NestJS Module or extend an existing one.
 
-Đầu vào (Inputs):
-- moduleName: Tên của mô-đun cần tạo (ví dụ: `products`)
-- targetPath: Thư mục đích đặt mã nguồn bên dưới `src/`
-- functionality: Tóm tắt yêu cầu nghiệp vụ và các endpoints cần cung cấp
+Inputs:
+- moduleName: Name of the module to create (e.g., `products`)
+- targetPath: The destination path inside `src/` to place the code
+- functionality: Summary of the business requirements and endpoints to expose
 
-Các bước thực hiện (Steps):
-1. Tạo thư mục mô-đun `<moduleName>/` bên dưới thư mục `src/` (ví dụ: `src/products`).
-2. Định nghĩa Entity model trong thư mục `<moduleName>/entities/`.
-3. Định nghĩa các Request/Response DTO trong thư mục `<moduleName>/dto/`. Thêm các decorator validation tương ứng.
-4. Xây dựng lớp Service trong `<moduleName>/` kế thừa DI của NestJS. Đặt toàn bộ business logic và bắt lỗi để ném ra các HttpException tường minh ở đây.
-5. Xây dựng Controller trong `<moduleName>/` để ánh xạ các yêu cầu HTTP, kiểm tra phân quyền (Guards) và trả về kết quả JSON phù hợp.
-6. Đăng ký Controller và Service vào file định nghĩa mô-đun `<moduleName>.module.ts`, export Service nếu các module khác cần sử dụng.
-7. Viết unit test cho Service (`.spec.ts`) và cấu hình kịch bản kiểm thử tích hợp (E2E) sử dụng Supertest.
-8. Chạy kiểm tra lỗi cục bộ:
+Steps:
+1. Create a module directory `<moduleName>/` under the `src/` directory (e.g., `src/products`).
+2. Define the Entity model in the `<moduleName>/entities/` folder.
+3. Define the Request/Response DTO classes in the `<moduleName>/dto/` folder. Apply appropriate validation decorators.
+4. Implement the Service class in `<moduleName>/` using NestJS Dependency Injection. Write 100% of the business logic here, handle exceptions, and throw explicit HttpExceptions.
+5. Implement the Controller class in `<moduleName>/` to map HTTP requests, configure permission checks (Guards), and return the JSON response.
+6. Register the Controller and Service inside the module definition file `<moduleName>.module.ts`. Export the Service if other modules need to consume it.
+7. Write unit tests for the Service (`.spec.ts`) and create E2E integration test scripts using Supertest.
+8. Execute local validation:
    - `{{runCommand}} lint`
    - `{{runCommand}} typecheck`
    - `{{runCommand}} test`

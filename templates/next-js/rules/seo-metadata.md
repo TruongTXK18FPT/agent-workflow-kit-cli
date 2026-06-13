@@ -1,18 +1,18 @@
-# Tối Ưu Hóa SEO & Cấu Trúc Semantic HTML
+# SEO Optimization & Semantic HTML
 
-Tài liệu này quy định việc sử dụng cấu trúc thẻ Semantic, tối ưu hóa điều hướng hình ảnh và tích hợp Metadata API của Next.js để đạt thứ hạng SEO tốt nhất.
+This document specifies conventions for using HTML5 Semantic tags, optimizing image delivery, and integrating Next.js Metadata APIs to achieve high SEO performance.
 
 ---
 
-## 🔍 Tích Hợp Metadata API Của Next.js
-- **Metadata Tĩnh:** Khai báo đối tượng `metadata` tĩnh trong các layouts hoặc pages không có biến số động:
+## 🔍 Next.js Metadata API
+- **Static Metadata:** Declare a static `metadata` object in layouts or pages that do not require dynamic route parameters:
   ```typescript
   export const metadata = {
     title: 'Dashboard | Skillverse Platform',
-    description: 'Trang tổng quan quản lý khóa học',
+    description: 'Course management overview dashboard',
   };
   ```
-- **Metadata Động:** Đối với các route động (như trang chi tiết bài viết, khóa học), khai báo cấu hình SEO thông qua hàm `generateMetadata` đối với các route động để tối ưu hóa SEO tối đa cho hệ thống tìm kiếm:
+- **Dynamic Metadata:** For dynamic routes (e.g., article details, course views), define metadata through the exported `generateMetadata` function to optimize search engine indexing:
   
   ```typescript
   import { Metadata } from 'next';
@@ -33,18 +33,18 @@ Tài liệu này quy định việc sử dụng cấu trúc thẻ Semantic, tố
 
 ---
 
-## 🎨 Cấu Trúc Semantic HTML5
-- **Thẻ cấu trúc:** Bắt buộc xây dựng bố cục trang bằng các thẻ HTML5 ngữ nghĩa thay vì lạm dụng các thẻ `<div>` vô nghĩa:
-  - `<header>`: Thanh tiêu đề hoặc thanh đầu trang chính.
-  - `<nav>`: Danh mục liên kết điều hướng cốt lõi.
-  - `<main>`: Bao bọc duy nhất phần nội dung cốt lõi của trang.
-  - `<section>`: Phân đoạn chủ đề nội dung tổng quát.
-  - `<article>`: Các thành phần độc lập (bài viết blog, phần tử thẻ card sản phẩm).
-  - `<footer>`: Chứa thông tin bản quyền và liên kết chân trang.
-- **Tiêu đề h-tags:** Đảm bảo thứ tự logic của các thẻ tiêu đề (từ `<h1>` đến `<h6>`). Đảm bảo có duy nhất một thẻ `<h1>` trên mỗi trang.
+## 🎨 Semantic HTML5 Structure
+- **Structural Tags:** Build layouts using semantic HTML5 tags instead of nesting generic `<div>` containers:
+  - `<header>`: Main navigation bar or header sections.
+  - `<nav>`: Primary navigation links.
+  - `<main>`: Wraps the unique primary content of the page.
+  - `<section>`: General thematic groupings of content.
+  - `<article>`: Independent self-contained items (e.g., blog posts, product cards).
+  - `<footer>`: Copyright and footer link sections.
+- **Header Hierarchy:** Follow a strict heading hierarchy (from `<h1>` down to `<h6>`). Ensure there is only one `<h1>` tag per page.
 
 ---
 
-## ⚡ Tối Ưu Hóa Hình Ảnh & Điều Hướng
-- **Tối ưu hình ảnh:** Tuyệt đối không dùng thẻ `<img>` thô. Bắt buộc sử dụng `<Image />` từ `next/image` với đầy đủ thuộc tính `sizes` và cấu hình `priority` cho các hình ảnh xuất hiện ở nấc màn hình đầu tiên (Above the fold).
-- **Tối ưu điều hướng:** Dùng `<Link />` từ `next/link` để kích hoạt cơ chế pre-fetching tài nguyên ngầm khi link xuất hiện trong viewport, giúp chuyển trang tức thì.
+## ⚡ Image & Link Optimizations
+- **Image Optimization:** Never use raw `<img>` tags. Use Next.js `<Image />` from `next/image` with appropriate `sizes` attributes, and set `priority` for above-the-fold images.
+- **Navigation Optimization:** Use `<Link />` from `next/link` to automatically trigger resource pre-fetching when links enter the viewport, enabling instant transition.

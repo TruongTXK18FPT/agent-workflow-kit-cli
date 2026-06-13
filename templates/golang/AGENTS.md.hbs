@@ -1,36 +1,36 @@
-## 🗺️ Hướng Dẫn Phát Triển Golang (Go Backend)
+## 🗺️ Golang Development Guide (Go Backend)
 
-### 🔄 Vòng Đời Phát Triển Tác Nhân (Agent Development Lifecycle)
-Tác nhân AI phải thực hiện tất cả các nhiệm vụ Golang theo quy trình 4 bước sau:
-1. **Thiết kế & Lập trình:** Triển khai các lớp nghiệp vụ tuân thủ cấu trúc Standard Go Project Layout. Giữ phần khởi chạy trong `cmd/`, logic nghiệp vụ trong `internal/`, và mã nguồn độc lập dùng chung trong `pkg/`.
-2. **Kiểm thử Toàn diện:** Viết unit test theo phương thức Table-Driven Tests sử dụng thư viện `testing` tích hợp của Go. Chạy kiểm thử bằng lệnh: `go test ./...`.
-3. **Chất lượng Mã nguồn:** Chạy kiểm tra lỗi tĩnh (static analysis) và định dạng mã nguồn:
-   - Kiểm tra Định dạng: `gofmt -w .`
-   - Kiểm tra Linter: `golangci-lint run`
-   - Chạy Build thử nghiệm: `go build ./...`
-4. **Quản lý Thư viện:** Thêm thư viện mới bằng lệnh: `go get [tên_thư_viện]`. Tuyệt đối không chỉnh sửa thủ công file `go.sum`.
-
----
-
-### 🏗️ Kiến Trúc Hệ Thống Bản Mẫu (Template Blueprint)
-Vui lòng tham khảo các tài liệu quy tắc chi tiết dưới đây:
-- Hướng dẫn coding style chuẩn Go, quy cách thiết kế Interface nhỏ gọn, quy tắc đặt tên: `@golang-style.md`
-- Tổ chức thư mục dự án theo cấu trúc Standard Go Project Layout và cơ chế Dependency Injection thủ công: `@project-layout.md`
-- Quy tắc xử lý lỗi tường minh, cơ chế Error Wrapping nâng cao và Custom Error nghiệp vụ: `@error-handling.md`
-- Quản lý bất đồng bộ, sử dụng Goroutines, Channels an toàn và tối ưu hóa Escape Analysis: `@concurrency.md`
+### 🔄 Agent Development Lifecycle
+The AI Agent must execute all Golang tasks following this 4-step workflow:
+1. **Design & Implementation:** Implement business logic adhering to the Standard Go Project Layout. Keep entrypoints in `cmd/`, core business logic in `internal/`, and standalone shared libraries in `pkg/`.
+2. **Comprehensive Testing:** Write unit tests using the table-driven testing pattern and Go's built-in `testing` library. Run tests with: `go test ./...`.
+3. **Code Quality & Formatting:** Ensure code compiles and meets formatting/linting rules:
+   - Formatting: `gofmt -w .`
+   - Linting: `golangci-lint run`
+   - Build Validation: `go build ./...`
+4. **Dependency Management:** Add new external libraries using `go get [library_name]`. Never manually edit the `go.sum` file.
 
 ---
 
-### 🏛️ Quy Tắc Phát Triển Nghiêm Ngặt
+### 🏗️ Template Blueprint
+Refer to the detailed rules below:
+- Go coding style, interface design, and naming conventions: `@golang-style.md`
+- Directory organization and manual dependency injection: `@project-layout.md`
+- Explicit error handling, wrapping, and custom API errors: `@error-handling.md`
+- Concurrency, goroutine/channel lifecycle, and escape analysis: `@concurrency.md`
 
-#### 1. Ranh Giới Gói & Đóng Gói (Package Boundaries)
-- **Cấm nhập chéo (Circular Dependency):** Thiết kế package theo Domain (Domain-driven) thay vì theo tầng công nghệ (controllers, models) để hạn chế vòng lặp import.
-- **Thư mục internal:** Đặt toàn bộ mã nguồn logic chính của ứng dụng bên trong `/internal` để tận dụng cơ chế bảo vệ của Go Compiler, chặn các package bên ngoài truy cập trực tiếp.
+---
 
-#### 2. Xử Lý Lỗi Tường Minh
-- **Kiểm tra lỗi:** Tuyệt đối không bỏ qua lỗi trả về. Bắt buộc viết `if err != nil` ngay sau khi gọi hàm có khả năng trả về lỗi.
-- **Error Wrapping:** Sử dụng `fmt.Errorf("failed to...: %w", err)` khi chuyển tiếp lỗi lên tầng trên để giữ nguyên ngữ cảnh gốc.
+### 🏛️ Strict Development Rules
 
-#### 3. Đồng Thời An Toàn (Safe Concurrency)
-- **Context:** Truyền `ctx context.Context` làm tham số đầu tiên cho các hàm có tương tác I/O.
-- **Race Condition:** Không chia sẻ trạng thái bộ nhớ giữa các Goroutine mà không được bảo vệ bởi `sync.Mutex` hoặc cơ chế nguyên tử (atomic).
+#### 1. Package Boundaries & Encapsulation
+- **No Circular Dependencies:** Design packages around domains/components rather than tech layers (e.g., separate folders for `course`, `billing` instead of `controllers`, `models`) to avoid circular imports.
+- **Internal Directory:** Keep 100% of core application logic inside `/internal` to enforce encapsulation and leverage Go compiler protections.
+
+#### 2. Explicit Error Handling
+- **Check Every Error:** Never ignore returned errors. Write `if err != nil` checks immediately after calling fallible functions.
+- **Wrap Errors:** Use `fmt.Errorf("failed to...: %w", err)` when propagating errors to preserve runtime context.
+
+#### 3. Safe Concurrency
+- **Context Propagation:** Pass `ctx context.Context` as the first argument to all functions executing I/O.
+- **Prevent Race Conditions:** Protect shared memory access across goroutines using `sync.Mutex` or `sync/atomic`.

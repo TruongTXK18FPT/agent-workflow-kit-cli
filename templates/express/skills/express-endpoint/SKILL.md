@@ -1,23 +1,23 @@
 ---
 name: express-endpoint
-description: Sinh hoặc mở rộng một API Endpoint Express.js + TypeScript an toàn, đầy đủ từ Router, Controller đến Validator
+description: Scaffold or extend a secure Express.js + TypeScript API endpoint including Router, Controller, and Validator
 ---
 
-Tuân thủ quy trình này để tạo mới một API Endpoint Express.js hoặc mở rộng tuyến định tuyến hiện có.
+Follow this process to generate a new Express.js API Endpoint or extend an existing route.
 
-Đầu vào (Inputs):
-- endpointName: Tên của API Endpoint cần tạo (ví dụ: `user-profile`)
-- routePath: Đường dẫn tuyến HTTP của API (ví dụ: `/api/v1/users/profile`)
-- httpMethod: Phương thức HTTP (GET, POST, PUT, DELETE)
-- targetPath: Thư mục gốc chứa mã nguồn của mô-đun để đặt tệp tin
+Inputs:
+- endpointName: Name of the API Endpoint to create (e.g., `user-profile`)
+- routePath: HTTP route path of the API (e.g., `/api/v1/users/profile`)
+- httpMethod: HTTP method (GET, POST, PUT, DELETE)
+- targetPath: The destination path to place the code files
 
-Các bước thực hiện (Steps):
-1. Định nghĩa Zod Validation Schema dưới thư mục `middlewares/` hoặc bên cạnh controller để kiểm duyệt các trường dữ liệu đầu vào.
-2. Xây dựng hàm Service tương ứng bên dưới thư mục `services/` để đảm nhiệm 100% logic xử lý nghiệp vụ, truy vấn dữ liệu ORM.
-3. Triển khai Controller điều phối trong thư mục `controllers/` sử dụng tiện ích bọc `asyncHandler` để giải phóng việc try/catch thủ công, nhận tham số từ request và gửi phản hồi dạng JSON sạch.
-4. Đăng ký Controller và gắn middleware `validateSchema(zodSchema)` vào file định tuyến Route tương ứng bên dưới thư mục `routes/`.
-5. Bổ sung các test suite kiểm thử đơn vị cho Service và kiểm thử tích hợp (E2E) qua Supertest.
-6. Chạy kiểm tra lỗi cục bộ:
+Steps:
+1. Define a Zod Validation Schema under the `middlewares/` directory or alongside the controller to validate input payloads.
+2. Implement the corresponding Service function under the `services/` directory to handle 100% of the business logic and ORM queries.
+3. Implement the Controller dispatcher in the `controllers/` directory using the `asyncHandler` wrapper to forward errors automatically, extract inputs, and send JSON responses.
+4. Register the Controller and mount the `validateSchema(zodSchema)` middleware on the target Route file under the `routes/` directory.
+5. Create unit test suites for the Service and integration test suites (E2E) using Supertest.
+6. Execute local validation:
    - `{{runCommand}} lint`
    - `{{runCommand}} typecheck`
    - `{{runCommand}} test`

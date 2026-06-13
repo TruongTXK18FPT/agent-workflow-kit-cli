@@ -1,37 +1,37 @@
-# Quản Lý Bộ Nhớ & Đồng Thời Trong Rust
+# Memory Management & Concurrency in Rust
 
-Tài liệu này quy định việc sử dụng Lifetimes, lựa chọn Smart Pointers chính xác, và an toàn đa luồng trong Async Rust (Tokio).
+This document details conventions for lifetimes, smart pointer usage, and async Tokio runtime operations.
 
 ---
 
-## ⏳ Quản Lý Lifetimes ('a)
-- Khi một struct hoặc hàm giữ một tham chiếu đến vùng dữ liệu nằm ngoài tầm kiểm soát của nó, bắt buộc phải khai báo tường minh vòng đời (Lifetimes) để compiler xác thực thời gian sống an toàn:
+## ⏳ Lifetime Annotations ('a)
+- When a struct or function references a borrowing context, annotate lifetimes explicitly to guarantee spatial memory safety:
 ```rust
 pub struct TokenValidator<'a> {
     pub secret_key: &'a str,
 }
 ```
-- Tránh tìm cách trốn tránh Borrow Checker bằng cách dùng từ khóa `'static` hoặc gọi `.clone()` bừa bãi khi có thể giải quyết bằng Lifetimes hợp lệ.
+- Avoid bypassing the borrow checker with unnecessary `.clone()` calls or `'static` lifetime modifiers if the scope can be expressed with valid lifetime relationships.
 
 ---
 
-## 🧠 Lựa Chọn Smart Pointers
-AI phải lựa chọn chính xác các con trỏ thông minh dựa trên ngữ cảnh thiết kế bộ nhớ theo bảng phân cấp sau:
+## 🧠 Smart Pointer Matrix
+Select the correct smart pointer types according to the allocation scope:
 
-| Loại Con Trỏ | Môi Trường | Đặc Tính Vùng Nhớ | Ứng Dụng Thực Tế |
+| Smart Pointer | Environment | Memory Allocation Characteristics | Application Use Case |
 | :--- | :--- | :--- | :--- |
-| **`Box<T>`** | Đơn / Đa luồng | Cấp phát dữ liệu kích thước lớn lên Heap | Ép phẳng cấu trúc dữ liệu đệ quy (Recursive Types) |
-| **`Rc<T>`** | Chỉ Đơn Luồng | Đếm tham chiếu không an toàn luồng | Chia sẻ dữ liệu đọc trong các tác vụ đơn luồng |
-| **`Arc<T>`** | Đa Luồng | Đếm tham chiếu an toàn (Atomic Ref Counter) | Chia sẻ tài nguyên dùng chung giữa các luồng xử lý Web Server |
-| **`RefCell<T>`** | Đơn luồng | Interior Mutability (Mượn ghi tại Runtime) | Thay đổi dữ liệu bên trong một đối tượng bất biến đơn luồng |
-| **`Mutex<T>`** | Đa luồng | Đảm bảo an toàn ghi giữa các luồng bằng khóa | Bảo vệ tài nguyên dùng chung trong kiến trúc Concurrency |
+| **`Box<T>`** | Single / Multi-thread | Allocates large types on the Heap | Flattens recursive data structures (Sized types) |
+| **`Rc<T>`** | Single-thread Only | Reference count without thread safety | Shares immutable data across a single-threaded runtime |
+| **`Arc<T>`** | Multi-thread | Thread-safe Reference Count (Atomic) | Shares immutable resources across thread pools (e.g., Web Server) |
+| **`RefCell<T>`** | Single-thread Only | Interior Mutability (Checked at Runtime) | Mutates fields inside an immutable single-threaded struct |
+| **`Mutex<T>`** | Multi-thread | Thread safety via OS or runtime lock | Protects mutable resources shared across multiple threads |
 
 ---
 
-## 🚦 Async Runtime (Tokio) & Phân Định Tác Vụ
-Khi sử dụng Tokio Runtime, việc chặn luồng chạy (block thread) bằng các tác vụ nặng sẽ làm treo hệ thống xử lý request. AI phải tuân thủ phân tách:
-- **Tác vụ I/O Bound:** (Truy vấn DB, đọc ghi file async, gọi mạng HTTP). Dùng trực tiếp cú pháp `async/await` tiêu chuẩn.
-- **Tác vụ CPU Bound:** (Mã hóa mật khẩu, xử lý ảnh, tính toán thuật toán nặng). Cấm chạy trực tiếp trong async context. Bắt buộc phải đẩy sang luồng hệ điều hành riêng qua `tokio::task::spawn_blocking`:
+## 🚦 Async Runtime (Tokio) CPU vs I/O Bound Tasks
+Blocking the executor threads in an async environment will starve the thread pool, degrading throughput.
+- **I/O Bound Tasks:** (DB Queries, Async file read/write, HTTP calls). Use standard `async/await` syntax.
+- **CPU Bound Tasks:** (Password hashing, image processing, complex computations). Never run these directly in the async thread pool. Use `tokio::task::spawn_blocking`:
 ```rust
 let hashed_password = tokio::task::spawn_blocking(move || {
     bcrypt::hash(password, bcrypt::DEFAULT_COST)
@@ -42,6 +42,6 @@ let hashed_password = tokio::task::spawn_blocking(move || {
 
 ---
 
-## 🔒 Thỏa Mãn Send + Sync & MutexGuard Qua Await
-- Mọi đối tượng muốn đẩy qua một ranh giới luồng (`tokio::spawn`) bắt buộc phải thỏa mãn hai auto traits: `Send` (có thể chuyển quyền sở hữu sang luồng khác) và `Sync` (nhiều luồng có thể truy cập qua tham chiếu).
-- **Cấm giữ MutexGuard qua điểm await:** Không được phép giữ các guard không an toàn luồng (như `std::sync::MutexGuard`) xuyên suốt qua một điểm `.await`. Nếu bắt buộc phải giữ khóa qua điểm await, phải sử dụng `tokio::sync::Mutex`.
+## 🔒 Send + Sync Traits & MutexGuard Safety
+- Shared items sent across task boundaries (`tokio::spawn`) must implement `Send` and `Sync`.
+- **MutexGuard across Await:** Never hold a non-thread-safe guard (like `std::sync::MutexGuard`) across `.await` points. Doing so will lead to compilation errors or runtime deadlocks. If a lock must span an await point, use `tokio::sync::Mutex`.

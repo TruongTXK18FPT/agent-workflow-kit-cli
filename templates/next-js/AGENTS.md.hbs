@@ -1,41 +1,41 @@
-## 🗺️ Hướng Dẫn Phát Triển Next.js (App Router)
+## 🗺️ Next.js Development Guide (App Router)
 
-### 🔄 Vòng Đời Phát Triển Tác Nhân (Agent Development Lifecycle)
-Tác nhân AI phải thực hiện tất cả các nhiệm vụ Next.js theo quy trình 5 bước sau:
-1. **Thiết kế & Lập trình:** Xây dựng page và component tuân thủ cấu trúc App Router. Mặc định sử dụng React Server Components (RSC).
-2. **Kiểm thử Toàn diện:** Viết unit test cho các tiện ích xử lý nghiệp vụ và kiểm thử hành vi giao diện bằng Jest/Vitest.
-3. **Chất lượng Mã nguồn:** Chạy các lệnh kiểm tra lỗi cú pháp và kiểu dữ liệu:
-   - Kiểm tra Lint: `{{runCommand}} lint`
-   - Kiểm tra Kiểu dữ liệu: `{{runCommand}} typecheck`
-   - Chạy Kiểm thử: `{{runCommand}} test` (hoặc `{{runCommand}} test -- --run` cho môi trường CI/CD)
-   - Chạy Build thử nghiệm: `{{runCommand}} build`
-4. **Quản lý Thư viện:** Cài đặt các thư viện mới bằng lệnh: `{{packageManager}} add [tên_thư_viện]`. Tuyệt đối cấm sửa thủ công file lock `{{lockFile}}`.
-
----
-
-### 🏗️ Kiến Trúc Hệ Thống Bản Mẫu (Template Blueprint)
-Vui lòng tham khảo các tài liệu quy tắc chi tiết dưới đây:
-- Quy ước viết mã, định dạng file, cấu trúc import tự động và quy tắc tổ chức folder: `@next-style.md`
-- Phân định ranh giới kiến trúc giữa React Server Components (RSC) và React Client Components (RCC): `@server-client-components.md`
-- Tiêu chuẩn hóa việc gọi API tại tầng Server, quản lý cơ chế Caching, Revalidation và triển khai Server Actions bảo mật: `@data-fetching-mutations.md`
-- Quy định bắt buộc về Semantic HTML5 và tích hợp Dynamic Metadata API: `@seo-metadata.md`
-- Quy trình từng bước giúp khởi tạo một Page hoặc Route mới không lỗi: `@SKILL.md`
+### 🔄 Agent Development Lifecycle
+The AI Agent must execute all Next.js tasks following this 5-step workflow:
+1. **Design & Implementation:** Build pages and components adhering to the App Router conventions. Default to React Server Components (RSC).
+2. **Comprehensive Testing:** Write unit tests for business utilities and component behavior using Jest/Vitest.
+3. **Code Quality & Type Safety:** Run syntax check and type check commands:
+   - Linting: `{{runCommand}} lint`
+   - Type Checking: `{{runCommand}} typecheck`
+   - Testing: `{{runCommand}} test` (or `{{runCommand}} test -- --run` for CI/CD environments)
+   - Build Validation: `{{runCommand}} build`
+4. **Dependency Management:** Install new libraries using `{{packageManager}} add [library_name]`. Never modify the lockfile `{{lockFile}}` manually.
 
 ---
 
-### 🏛️ Quy Tắc Phát Triển Nghiêm Ngặt
+### 🏗️ Template Blueprint
+Refer to the detailed rules below:
+- Coding conventions, formatting, import sorting, and directory structure: `@next-style.md`
+- Architectural boundaries between React Server Components (RSC) and React Client Components (RCC): `@server-client-components.md`
+- Server-side data fetching, caching, revalidation, and secure Server Actions: `@data-fetching-mutations.md`
+- Semantic HTML5 standards and Dynamic Metadata API configurations: `@seo-metadata.md`
+- Step-by-step process to generate new Pages or Routes cleanly: `@SKILL.md`
 
-#### 1. Kiến Trúc Thành Phần (Rendering Paradigm)
-- **Mặc định là Server Components:** Tất cả các component trong thư mục `app/` mặc định phải là React Server Components (RSC).
-- **Cách ly Client Components (RCC):** Chỉ gắn directive `"use client"` ở lớp component lá (Leaf Components) cần tương tác (như xử lý Form, Nút bấm bắt sự kiện onClick, sử dụng useState, useEffect, hoặc các Hook trình duyệt).
+---
 
-#### 2. Fetching Dữ Liệu & Server Actions
-- **Gọi dữ liệu tại gốc:** Thực hiện `fetch()` trực tiếp bên trong các async Server Components để tận dụng tối đa cơ chế tối ưu hóa request và bảo mật mã nguồn API token tại Server.
-- **Quản lý bộ nhớ đệm (Caching & Revalidation):** Nghiêm cấm sử dụng fetch thô không có cấu hình kiểm soát vòng đời dữ liệu.
-- **Đột biến dữ liệu (Mutations via Server Actions):** Toàn bộ các tương tác POST, PUT, DELETE phải qua Server Actions (`"use server"`).
-- **Trải nghiệm người dùng mượt mà:** Sử dụng hook `useActionState` (hoặc `useFormState`) để quản lý trạng thái phản hồi của form từ server và bọc các tác vụ mutate trong `useTransition` nhằm duy trì giao diện không bị đóng băng.
+### 🏛️ Strict Development Rules
 
-#### 3. Tối Ưu Hóa Hiệu Năng & SEO
-- **Tối ưu hình ảnh:** Tuyệt đối không dùng thẻ `<img>` thô. Bắt buộc sử dụng `<Image />` từ `next/image` với đầy đủ thuộc tính `sizes` và cấu hình `priority` cho các hình ảnh xuất hiện ở nấc màn hình đầu tiên (Above the fold).
-- **Tối ưu điều hướng:** Dùng `<Link />` từ `next/link` để kích hoạt cơ chế pre-fetching tài nguyên ngầm khi link xuất hiện trong viewport.
-- **Cấu hình Metadata động:** Khai báo cấu hình SEO thông qua hàm `generateMetadata` đối với các route động để tối ưu hóa SEO tối đa cho hệ thống tìm kiếm.
+#### 1. Rendering Paradigm
+- **Server Components by Default:** All components within the `app/` directory must default to React Server Components (RSC).
+- **Isolate Client Components (RCC):** Declare `"use client"` only at leaf components that require interactivity (e.g., Form submissions, click handlers, `useState`, `useEffect`, or browser APIs).
+
+#### 2. Data Fetching & Server Actions
+- **Fetch at the Source:** Execute `fetch()` directly inside async Server Components to optimize request caching and protect API tokens/secrets.
+- **Cache Management:** Never use raw fetch without specifying caching/revalidation parameters.
+- **Mutations via Server Actions:** Handle POST, PUT, and DELETE mutations using Server Actions (marked with `"use server"`).
+- **Fluid UX:** Use the `useActionState` (or `useFormState`) hook to manage server response states and wrap mutation triggers in `useTransition` to keep the UI responsive.
+
+#### 3. Performance & SEO Optimizations
+- **Image Optimization:** Never use raw `<img>` tags. Use `next/image`'s `<Image />` with appropriate `sizes` attributes, and set `priority` for above-the-fold images.
+- **Navigation:** Use `<Link />` from `next/link` to enable background pre-fetching when links enter the viewport.
+- **Dynamic Metadata:** Export a `generateMetadata` function in dynamic routes to optimize search engine crawling.

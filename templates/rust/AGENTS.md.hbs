@@ -1,34 +1,34 @@
-## 🗺️ Hướng Dẫn Phát Triển Rust
+## 🗺️ Rust Development Guide
 
-### 🔄 Vòng Đời Phát Triển Tác Nhân (Agent Development Lifecycle)
-Tác nhân AI phải thực hiện tất cả các nhiệm vụ Rust theo quy trình 4 bước sau:
-1. **Thiết kế & Lập trình:** Triển khai các lớp nghiệp vụ tuân thủ cơ chế của Rust. Tách biệt cấu trúc rõ ràng: `main.rs` (cho binary application), `lib.rs` (chứa logic nghiệp vụ có thể tái sử dụng).
-2. **Kiểm thử Toàn diện:** Viết unit test ngay trong module test nội bộ và integration test trong thư mục `/tests`. Chạy kiểm thử bằng lệnh: `cargo test`.
-3. **Chất lượng Mã nguồn:** Chạy kiểm duyệt tự động định kỳ để đảm bảo zero warnings:
-   - Kiểm tra Định dạng: `cargo fmt`
-   - Kiểm tra Linter: `cargo clippy --all-targets -- -D warnings`
-   - Chạy Build thử nghiệm: `cargo build`
-4. **Quản lý Thư viện:** Thêm thư viện mới bằng lệnh: `cargo add [tên_thư_viện]`. Tuyệt đối không chỉnh sửa thủ công file `Cargo.lock`.
-
----
-
-### 🏗️ Kiến Trúc Hệ Thống Bản Mẫu (Template Blueprint)
-Vui lòng tham khảo các tài liệu quy tắc chi tiết dưới đây:
-- Hướng dẫn phong cách lập trình Idiomatic Rust, quy tắc Clippy và tối ưu hóa clone: `@rust-style.md`
-- Quản lý Module/Crate, tổ chức Cargo Workspaces và Dependency Injection bằng Trait: `@project-layout.md`
-- Quy tắc xử lý lỗi sử dụng `Result/Option`, cấm `unwrap/expect`, phân định `thiserror` vs `anyhow`: `@error-handling.md`
-- Quản lý lifetimes, Smart Pointers (`Box`, `Rc`, `Arc`, `Mutex`) và lập trình bất đồng bộ Tokio: `@memory-concurrency.md`
+### 🔄 Agent Development Lifecycle
+The AI Agent must execute all Rust tasks following this 4-step workflow:
+1. **Design & Implementation:** Implement business logic adhering to Rust conventions. Enforce structural separation: `main.rs` (for binary application setup) and `lib.rs` (for core business logic that can be reused and tested).
+2. **Comprehensive Testing:** Write unit tests inside internal test modules and integration tests in the `/tests` directory. Run tests with: `cargo test`.
+3. **Code Quality & Linting:** Run check tools regularly to ensure a warning-free state:
+   - Formatting: `cargo fmt`
+   - Linting: `cargo clippy --all-targets -- -D warnings`
+   - Build Validation: `cargo build`
+4. **Dependency Management:** Add external libraries using `cargo add [library_name]`. Never manually edit the `Cargo.lock` file.
 
 ---
 
-### 🏛️ Quy Tắc Phát Triển Nghiêm Ngặt
+### 🏗️ Template Blueprint
+Refer to the detailed rules below:
+- Idiomatic Rust, clippy lints, and cloning optimizations: `@rust-style.md`
+- Crate modules, Cargo Workspaces, and Trait-based Dependency Injection: `@project-layout.md`
+- Failures management, Result/Option, `thiserror`, and `anyhow`: `@error-handling.md`
+- Lifetimes `'a`, Smart Pointers, and async Tokio safety: `@memory-concurrency.md`
 
-#### 1. Quyền Sở Hữu & Cơ Chế Mượn (Ownership & Borrowing)
-- **Hạn chế Clone:** Chỉ dùng `.clone()` trên các kiểu dữ liệu Heap khi thực sự cần sở hữu một bản sao độc lập của dữ liệu đó. Thay vào đó, ưu tiên thiết kế hàm nhận tham chiếu đọc `&T` hoặc tham chiếu ghi `&mut T`.
-- **Độc quyền mượn ghi:** Đảm bảo tại một thời điểm chỉ có duy nhất một tham chiếu ghi `&mut T` và không tồn tại song song với bất kỳ tham chiếu đọc `&T` nào trong cùng một Scope.
+---
 
-#### 2. Xử Lý Lỗi An Toàn
-- **Nghiêm cấm unwrap:** Tuyệt đối không sử dụng `.unwrap()` hoặc `.expect()` trong code production (trừ môi trường test). Bắt buộc trả về `Result<T, E>` hoặc `Option<T>` để đảm bảo an toàn bộ nhớ.
+### 🏛️ Strict Development Rules
 
-#### 3. Bất Đồng Bộ Hiệu Năng Cao (Async Rust)
-- **Tác vụ CPU Bound:** Không chạy trực tiếp các tác vụ CPU nặng (như mã hóa mật khẩu, thuật toán) trong luồng async thông thường. Bắt buộc đẩy sang luồng riêng qua `tokio::task::spawn_blocking`.
+#### 1. Ownership & Borrowing
+- **Avoid Over-Cloning:** Call `.clone()` on Heap types only when you must own an independent copy. Otherwise, design functions to receive read references `&T` or write references `&mut T`.
+- **Exclusive Mutable Borrow:** Ensure only one mutable reference `&mut T` exists at a time, and never let it coexist with any read references `&T` in the same scope.
+
+#### 2. Safe Error Handling
+- **No Unwraps:** Never use `.unwrap()` or `.expect()` in production code (except in tests). Propagate errors using `Result<T, E>` or `Option<T>` to ensure system reliability.
+
+#### 3. Async Concurrency (Tokio)
+- **CPU-Bound Tasks:** Never run heavy CPU operations (e.g., encryption, intensive loops) directly inside async contexts. Offload them using `tokio::task::spawn_blocking`.

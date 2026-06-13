@@ -1,39 +1,39 @@
-# Xác Thực Dữ Liệu & Quản Lý Lỗi Tập Trung
+# Data Validation & Unified Exception Handling
 
-Tài liệu này quy định việc sử dụng Class Validator, thiết lập ValidationPipe toàn cục và xử lý lỗi tập trung qua Exceptions Filters trong NestJS.
+This document specifies conventions for using Class Validator, configuring the global ValidationPipe, and handling errors centrally via Exception Filters in NestJS.
 
 ---
 
-## 🛡️ Kiểm Thử Dữ Liệu Đầu Vào (Validation & Transformation)
-- **Định hình DTO nghiêm ngặt:** Toàn bộ dữ liệu đầu vào của HTTP Request (`@Body()`, `@Query()`, `@Param()`) phải được đặc tả qua các lớp DTO sử dụng decorator từ `class-validator` (như `@IsString()`, `@IsEmail()`, `@IsInt()`).
-- **Kích hoạt ống lọc toàn cục (Global Validation Pipe):** Khai báo tại file `main.ts` để tự động lọc bỏ các thuộc tính không nằm trong danh sách trắng (whitelist) và tự động ép kiểu dữ liệu (transform).
+## 🛡️ Input Validation & Transformation
+- **Strict DTO Mapping:** All incoming HTTP request data (`@Body()`, `@Query()`, `@Param()`) must be mapped using DTO classes decorated with rules from `class-validator` (such as `@IsString()`, `@IsEmail()`, `@IsInt()`).
+- **Global Validation Pipe:** Configure the global `ValidationPipe` inside `main.ts` to automatically strip properties not declared in the DTO (whitelist) and transform inputs into their corresponding types.
 
   ```typescript
-  // Trong file main.ts
+  // Inside main.ts
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,            // Tự động loại bỏ các thuộc tính không khai báo trong DTO
-      forbidNonWhitelisted: true, // Ném lỗi 400 nếu client gửi thuộc tính thừa
-      transform: true,            // Tự động chuyển đổi kiểu dữ liệu (string sang number, object sang DTO class)
+      whitelist: true,            // Auto-strips properties not declared in DTO
+      forbidNonWhitelisted: true, // Throws HTTP 400 if client sends extra fields
+      transform: true,            // Auto-casts types (e.g. string to number, object to class instance)
     }),
   );
   ```
 
 ---
 
-## 🚨 Quản Lý Ngoại Lệ Toàn Cục (Unified Exception Handling)
-- **Cấm trả về lỗi hệ thống thô:** Tuyệt đối không để lộ lỗi thô (chẳng hạn như lỗi từ DB, lỗi kết nối dịch vụ) ra ngoài client với mã lỗi 500.
-- **Sử dụng HttpExceptions tích hợp:** Bắt buộc phải bắt lỗi (try/catch) ở tầng Service và ánh xạ sang các Http Exception tường minh của NestJS (`NotFoundException`, `BadRequestException`, `ForbiddenException`, v.v.).
+## 🚨 Unified Exception Handling
+- **No Raw System Errors:** Never expose raw database or execution exceptions directly to clients with HTTP 500 errors.
+- **Built-in HttpExceptions:** Implement try/catch blocks within Services and map failures to explicit NestJS HttpExceptions (e.g., `NotFoundException`, `BadRequestException`, `ForbiddenException`).
   
   ```typescript
   try {
     return await this.courseRepo.findOneOrFail(id);
   } catch (error) {
-    throw new NotFoundException("Khóa học không tồn tại trên hệ thống.");
+    throw new NotFoundException("The requested course does not exist.");
   }
   ```
 
-- **Tập trung hóa bằng Exception Filter:** Xây dựng một Filter toàn cục để cấu trúc lại định dạng JSON trả về cho Client một cách đồng nhất. Phản hồi lỗi hệ thống mong muốn phải có cấu trúc:
+- **Global Exception Filter:** Implement a global Exception Filter to structure JSON error responses uniformly. The standardized error payload must follow this structure:
 
   ```json
   {
@@ -41,6 +41,6 @@ Tài liệu này quy định việc sử dụng Class Validator, thiết lập V
     "statusCode": 404,
     "timestamp": "2026-06-13T06:48:24.000Z",
     "path": "/api/v1/courses/999",
-    "message": "Khóa học không tồn tại trên hệ thống."
+    "message": "The requested course does not exist."
   }
   ```

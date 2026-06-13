@@ -1,25 +1,25 @@
-# Cấu Trúc Lớp Presentation (API Controllers)
+# Presentation Layer Structure (API Controllers)
 
-Tài liệu này quy định cấu trúc và trách nhiệm của API Controllers trong tầng Presentation của ứng dụng .NET.
-
----
-
-## 🏛️ Trách Nhiệm Của API Controller
-API Controller chịu trách nhiệm:
-1. Nhận yêu cầu HTTP (HTTP Requests) từ client.
-2. Ánh xạ các tham số URL, Query String, hoặc Request Body vào các DTO tương ứng.
-3. Chuyển giao các tham số đó sang tầng Application (Services/Queries/Commands).
-4. Nhận lại kết quả và phản hồi Client thông qua các mã trạng thái HTTP phù hợp (200 OK, 201 Created, 400 Bad Request, 404 Not Found, v.v.).
+This document defines the structure and responsibilities of API Controllers inside the Presentation layer of a .NET application.
 
 ---
 
-## 🚦 Quy Tắc Phát Triển
-- **Controller mỏng (Thin Controllers):** Controllers không chứa bất kỳ logic nghiệp vụ, tính toán thuật toán, hay truy vấn DB trực tiếp. 100% logic đó phải nằm dưới Application layer.
-- **Không tiêm DbContext vào Controller:** DbContext phải được che giấu dưới Infrastructure / Repository layer. Tầng Presentation tuyệt đối không gọi DbContext.
-- **Sử dụng DTO thay vì Entity trực tiếp:**
-  - Không nhận trực tiếp Domain Entities làm đầu vào của Controller.
-  - Không trả trực tiếp Domain Entities về cho Client để tránh lộ cấu trúc DB hoặc lỗi cyclic references. Luôn ánh xạ qua các lớp DTO (Data Transfer Objects).
-- **Cấu hình định tuyến Route rõ ràng:** Sử dụng attribute routing để khai báo rõ ràng phương thức HTTP và endpoint:
+## 🏛️ API Controller Responsibilities
+An API Controller is responsible for:
+1. Receiving incoming HTTP requests from clients.
+2. Mapping URL parameters, query strings, or request bodies into target request DTOs.
+3. Delegating request processing to the Application layer (Services/Queries/Commands).
+4. Receiving results and responding to the client using appropriate HTTP status codes (e.g., `200 OK`, `201 Created`, `400 Bad Request`, `404 Not Found`).
+
+---
+
+## 🚦 Development Rules
+- **Thin Controllers:** Controllers must not contain business logic, algorithmic calculations, or direct database queries. 100% of this logic must reside in the Application layer.
+- **Do Not Inject DbContext into Controllers:** Keep `DbContext` encapsulated within the Infrastructure / Repository layers. The Presentation layer must never access `DbContext` directly.
+- **Use DTOs Instead of Domain Entities:**
+  - Never accept raw Domain Entities as Controller input parameters.
+  - Never return raw Domain Entities directly to the client to prevent exposing the database schema or triggering cyclic reference errors. Always map records to DTO (Data Transfer Object) classes.
+- **Explicit Route Declarations:** Use attribute routing to clearly declare HTTP methods and endpoints:
   ```csharp
   [ApiController]
   [Route("api/v1/[controller]")]

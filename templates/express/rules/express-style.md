@@ -1,28 +1,28 @@
-# Quy Ước Đặt Tên & Coding Style cho Express.js
+# Express.js Naming Conventions & Coding Style
 
-Tài liệu này hướng dẫn coding style sạch, định nghĩa kiểu dữ liệu tường minh bằng TypeScript trong môi trường Express.js.
+This document defines coding conventions, directory layout, and TypeScript configurations for Express.js applications.
 
 ---
 
-## 🏷️ Quy Ước Đặt Tên (Naming Conventions)
+## 🏷️ Naming Conventions
 
-### Thư mục Phân lớp (Architecture Folders)
-Mã nguồn phải được tách biệt hoàn toàn theo kiến trúc 3 lớp (3-Tier Architecture):
+### Directory Layout (3-Tier Architecture)
+The codebase must be structured cleanly according to a 3-tier architecture layout:
 ```bash
 src/
-├── config/             # Cấu hình biến môi trường, kết nối Database
-├── middlewares/        # Các hàm Middleware (Auth, Log, Validation)
-├── models/             # Schema cơ sở dữ liệu (Mongoose, Sequelize ORM, Prisma)
-├── routes/             # Định tuyến HTTP, cấu hình gắn kết middleware đầu vào
-├── controllers/        # Điều phối Request, định dạng Response đầu ra
-├── services/           # Chứa 100% logic nghiệp vụ xử lý dữ liệu và tính toán
-├── utils/              # Các hàm bổ trợ dùng chung
-└── app.ts              # File khởi tạo cấu hình Express App
+├── config/             # Environment configurations, DB initializations
+├── middlewares/        # Express middleware functions (Auth, Log, Validation)
+├── models/             # Database Schemas (Mongoose, Sequelize, or Prisma client)
+├── routes/             # HTTP Route definitions and input middleware binding
+├── controllers/        # Request parameter extraction, response formatting
+├── services/           # Houses 100% of business logic and computations
+├── utils/              # Standalone utility helper functions
+└── app.ts              # Express App setup and server bootstrapping
 ```
 
-### Quy ước Tên Tệp tin (File Naming)
-- **Tính đồng nhất:** Toàn bộ dự án phải chọn và tuân thủ duy nhất định dạng `kebab-case.ts`.
-- **Hậu tố định danh:** Tên file phải đi kèm vai trò kiến trúc của nó làm hậu tố:
+### Filename Notation
+- **Consistency:** Use `kebab-case.ts` across all filenames in the repository.
+- **Suffix Declarations:** Filenames must end with a suffix representing their architectural role:
   - Controller: `user-controller.ts`
   - Service: `user-service.ts`
   - Route: `user-route.ts`
@@ -31,9 +31,9 @@ src/
 
 ---
 
-## 📦 Định Nghĩa Kiểu Dữ Liệu & Quy Chuẩn TypeScript
-- **Khai báo kiểu dữ liệu tường minh:** Không dùng kiểu ngầm định. Luôn định nghĩa rõ ràng kiểu cho tham số `req`, `res`, và `next` lấy từ thư viện `express`:
+## 📦 TypeScript & Type Declarations
+- **Explicit Type Declarations:** Avoid implicit type inference. Always define types for `req`, `res`, and `next` parameters imported from `express`:
   ```typescript
   import { Request, Response, NextFunction } from 'express';
   ```
-- **Không lạm dụng `any`:** Định nghĩa đầy đủ các interface hoặc type cho các cấu trúc dữ liệu gửi lên và trả về cho Client.
+- **Strictly Ban the `any` Keyword:** Declare interfaces or types for all request bodies and API response structures.

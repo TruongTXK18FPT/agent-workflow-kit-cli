@@ -27,7 +27,7 @@ interface AddOptions {
 
 export async function runAdd(stack: string, options: AddOptions) {
   const targetStack = stack.toLowerCase();
-  const validStacks = ["spring-boot", "react-ts", "next-js", "nestjs", "express", "fastapi", "python-ai", "dotnet"];
+  const validStacks = ["spring-boot", "react-ts", "next-js", "nestjs", "express", "fastapi", "python-ai", "dotnet", "golang", "rust"];
   if (!validStacks.includes(targetStack)) {
     console.error(
       chalk.red(
@@ -67,7 +67,9 @@ export async function runAdd(stack: string, options: AddOptions) {
   // 3. Write or Update AGENTS.md and/or GEMINI.md in the target directory
   const geminiPath = path.join(targetDir, "GEMINI.md");
   const agentsPath = path.join(targetDir, "AGENTS.md");
+  const globalRules = await readStaticTemplateFile("common/GLOBAL_RULES.md").catch(() => "");
   const moduleAgentsContent = await renderTemplate("common/AGENTS.md.hbs", {
+    globalRules,
     stackContent,
   });
 

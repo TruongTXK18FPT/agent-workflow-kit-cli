@@ -1,14 +1,14 @@
-# Đăng Ký & Sử Dụng Dependency Injection (DI)
+# Dependency Injection (DI) Configurations
 
-Tài liệu này hướng dẫn cách cấu hình và tiêm phụ thuộc trong các ứng dụng .NET Core.
+This document details guidelines for configuring and consuming dependency injection in .NET Core applications.
 
 ---
 
-## 💉 Constructor Injection (Tiêm qua Hàm khởi tạo)
-- **Quy tắc bắt buộc:** Luôn luôn giải quyết các phụ thuộc của Class thông qua Constructor. Gán chúng vào các trường private readonly có tiền tố gạch dưới `_`.
-- Tuyệt đối không dùng Service Locator (không gọi `app.Services.GetService<T>()` hay tiêm `IServiceProvider` để lấy service động tại runtime).
+## 💉 Constructor Injection
+- **Mandatory Rule:** Always resolve class dependencies using constructor parameters. Assign them to private readonly fields prefixed with an underscore `_`.
+- Never use the Service Locator pattern (do not call `app.Services.GetService<T>()` or inject `IServiceProvider` to dynamically resolve services at runtime).
 
-  * **Không hợp lệ (❌ Nghiêm cấm):**
+  * **Invalid (❌ Prohibited):**
     ```csharp
     public class OrderService
     {
@@ -26,7 +26,7 @@ Tài liệu này hướng dẫn cách cấu hình và tiêm phụ thuộc trong 
         }
     }
     ```
-  * **Hợp lệ (✔️ Khuyến khích):**
+  * **Valid (✔️ Recommended):**
     ```csharp
     public class OrderService : IOrderService
     {
@@ -47,8 +47,8 @@ Tài liệu này hướng dẫn cách cấu hình và tiêm phụ thuộc trong 
 
 ---
 
-## ⚙️ Đăng Ký Vòng Đời Dịch Vụ (Service Lifetimes)
-Lựa chọn đúng vòng đời khi đăng ký dịch vụ trong `Program.cs`:
-1. **Transient (`AddTransient<I, T>()`):** Tạo mới mỗi khi được yêu cầu. Dành cho các dịch vụ nhẹ, không lưu trạng thái (Stateless Services).
-2. **Scoped (`AddScoped<I, T>()`):** Tạo mới một lần cho mỗi HTTP Request. Thích hợp cho Repository, Database Context (`DbContext`), và các dịch vụ nghiệp vụ.
-3. **Singleton (`AddSingleton<I, T>()`):** Tạo một lần duy nhất cho toàn bộ vòng đời ứng dụng. Dành cho caching in-memory, cấu hình hệ thống, helper dùng chung.
+## ⚙️ Service Lifetimes Registration
+Register dependencies with the appropriate lifetime scopes inside `Program.cs`:
+1. **Transient (`AddTransient<I, T>()`):** Instantiated every time they are requested. Use for lightweight, stateless services.
+2. **Scoped (`AddScoped<I, T>()`):** Instantiated once per HTTP request context. Recommended for repositories, database contexts (`DbContext`), and business services.
+3. **Singleton (`AddSingleton<I, T>()`):** Instantiated once and shared across the entire application lifetime. Use for in-memory caching, system configurations, and thread-safe helper services.

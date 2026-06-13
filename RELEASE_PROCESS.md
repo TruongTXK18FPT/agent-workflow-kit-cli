@@ -1,91 +1,91 @@
-# Quy trình Phát hành (Release Process) - `agent-workflow-kit-cli`
+# Release Process - `agent-workflow-kit-cli`
 
-Tài liệu này đặc tả quy trình phát hành phiên bản mới của gói dòng lệnh `agent-workflow-kit-cli` lên npm registry một cách an toàn, chi tiết và hạn chế tối đa rủi ro gặp lỗi trên production.
-
----
-
-## 🛠️ Trạng thái NPM Registry hiện tại
-* **Tên gói:** `agent-workflow-kit-cli`
-* **NPM Registry mặc định:** `https://registry.npmjs.org/`
-* **Yêu cầu bảo mật:** Cần lưu trữ mã Token NPM của dự án vào GitHub Secrets với tên biến là `NPM_TOKEN` để hỗ trợ CI/CD publish tự động.
+This document specifies the process for publishing new versions of the command-line package `agent-workflow-kit-cli` to the npm registry safely, systematically, and with minimal risk of production bugs.
 
 ---
 
-## 📋 Checklist các bước phát hành chi tiết (Release Checklist)
+## 🛠️ Current NPM Registry Status
+- **Package Name:** `agent-workflow-kit-cli`
+- **Default NPM Registry:** `https://registry.npmjs.org/`
+- **Security Requirement:** The project's NPM Token must be stored in GitHub Secrets as `NPM_TOKEN` to enable automated publishing via CI/CD.
 
-Quy trình phát hành gồm 4 giai đoạn bắt buộc:
+---
 
-### Giai đoạn 1: Chuẩn bị & Xác minh cục bộ (Local Verification)
-Trước khi tạo bất kỳ tag phiên bản mới nào trên Git, nhà phát triển phụ trách (hoặc Agent) bắt buộc phải thực hiện các bước sau tại local:
+## 📋 Release Checklist
 
-1. **Làm sạch môi trường phát triển:**
+The release process consists of 4 mandatory stages:
+
+### Stage 1: Preparation & Local Verification
+Before creating any new version tag on Git, the responsible developer (or Agent) must perform the following steps locally:
+
+1. **Clean Development Environment:**
    ```bash
-   # Xóa thư mục node_modules và tệp build cũ
+   # Remove node_modules and old build artifacts
    rm -rf node_modules dist
    
-   # Cài đặt lại sạch các dependencies từ lockfile
+   # Perform a clean install of dependencies from the lockfile
    npm ci
    ```
-2. **Kiểm tra biên dịch & Chạy bộ kiểm thử:**
+2. **Compile Check & Run Tests:**
    ```bash
-   # Biên dịch TypeScript và chạy Vitest
+   # Compile TypeScript and run Vitest
    npm run build
    npm test
    ```
-   *Yêu cầu: 100% test cases phải đạt trạng thái **PASSED**.*
+   *Requirement: 100% of test cases must be **PASSED**.*
 
-3. **Kiểm thử đóng gói (Package Dry-Run):**
+3. **Packaging Dry-Run:**
    ```bash
-   # Đóng gói thử nghiệm cục bộ
+   # Package the project locally
    npm pack
    ```
-   *Kiểm tra file `.tgz` sinh ra:*
-   - Giải nén thủ công tệp tin để đảm bảo không chứa mã nguồn TypeScript gốc `.ts` hay thư mục `tests/`.
-   - Đảm bảo có đầy đủ các tệp phân phối: `dist/`, `templates/`, `LICENSE`, `README.md`.
-   - Xóa file `.tgz` sau khi xác minh xong.
+   *Verify the generated `.tgz` file:*
+   - Manually extract the archive to ensure it contains no raw TypeScript source files (`.ts`) or the `tests/` directory.
+   - Confirm all distribution files are present: `dist/`, `templates/`, `LICENSE`, `README.md`.
+   - Delete the `.tgz` file once verified.
 
 ---
 
-### Giai đoạn 2: Nâng phiên bản & Tagging (Bump Version)
-Khi local đã đảm bảo hoạt động hoàn hảo, thực hiện nâng phiên bản theo chuẩn [Semantic Versioning (SemVer)](https://semver.org/):
+### Stage 2: Bump Version & Tagging
+Once local validation passes perfectly, perform the version bump following [Semantic Versioning (SemVer)](https://semver.org/):
 
-1. **Chạy lệnh nâng version của NPM:**
+1. **Run the NPM version command:**
    ```bash
-   # Sử dụng một trong ba tùy chọn: patch, minor, hoặc major
-   # Ví dụ nâng phiên bản sửa lỗi (patch):
+   # Use one of the three options: patch, minor, or major
+   # For example, to bump a patch version:
    npm version patch
    ```
-   *Lệnh này sẽ tự động:*
-   - Cập nhật số phiên bản trong `package.json` và `package-lock.json`.
-   - Tạo một commit Git tự động chứa sự thay đổi này.
-   - Tạo một tag Git tương ứng (ví dụ: `v1.0.1`).
+   *This command will automatically:*
+   - Update the version number in `package.json` and `package-lock.json`.
+   - Create an automated Git commit containing this change.
+   - Create a corresponding Git tag (e.g., `v1.0.1`).
 
-2. **Push mã nguồn và tag lên GitHub:**
+2. **Push source code and tags to GitHub:**
    ```bash
    git push origin main --tags
    ```
 
 ---
 
-### Giai đoạn 3: Tự động hóa CI/CD trên GitHub Actions
-Khi tag `v*` được đẩy lên GitHub, workflow [release.yml](file:///.github/workflows/release.yml) sẽ tự động được kích hoạt:
+### Stage 3: Automated CI/CD via GitHub Actions
+When a `v*` tag is pushed to GitHub, the workflow [release.yml](file:///.github/workflows/release.yml) is automatically triggered:
 
-1. **Chạy Job Kiểm thử (Test Job):**
-   - Chạy toàn bộ suite kiểm thử Vitest trên một ma trận gồm nhiều phiên bản Node.js (`18.x`, `20.x`, `22.x`) trên môi trường Linux sạch.
-2. **Chạy Job Phát hành (Publish Job):**
-   - Nếu Job Kiểm thử thành công hoàn toàn, hệ thống sẽ tự động đăng nhập vào npm registry thông qua `NODE_AUTH_TOKEN` (lấy từ GitHub Secrets `NPM_TOKEN`).
-   - Chạy biên dịch production (`npm run build`).
-   - Thực thi `npm publish` để đẩy gói lên npm registry.
+1. **Run Test Job:**
+   - Runs the entire Vitest suite on a matrix of Node.js versions (`18.x`, `20.x`, `22.x`) on clean Linux runners.
+2. **Run Publish Job:**
+   - If the Test Job completes successfully, the system automatically authenticates with the npm registry using `NODE_AUTH_TOKEN` (retrieved from GitHub Secrets `NPM_TOKEN`).
+   - Runs the production compilation (`npm run build`).
+   - Executes `npm publish` to publish the package to the npm registry.
 
 ---
 
-### Giai đoạn 4: Xác minh sau phát hành (Post-Release Verification)
-Để đảm bảo người dùng cuối nhận được bản cài đặt chính xác:
+### Stage 4: Post-Release Verification
+To ensure end-users receive the correct installation:
 
-1. **Tạo một thư mục kiểm thử trống hoàn toàn** ngoài workspace của bạn.
-2. **Khởi chạy trực tiếp thông qua `npx`:**
+1. **Create an empty test directory** completely outside your workspace.
+2. **Execute directly via `npx`:**
    ```bash
    npx agent-workflow-kit-cli@latest init --dry-run
    ```
-3. **Kiểm tra kết quả:**
-   - Xác minh xem CLI có tải xuống, chạy thành công, và in ra các thông điệp UX/đường dẫn một cách chính xác hay không.
+3. **Verify Results:**
+   - Verify that the CLI downloads, runs successfully, and prints the correct UX messages/paths.
