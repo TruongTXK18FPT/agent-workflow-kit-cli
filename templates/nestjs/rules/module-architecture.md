@@ -1,14 +1,14 @@
-# Module Architecture & Dependency Injection Rules
+# Kiến Trúc Mô-đun & Cơ Chế Tiêm Phụ Thuộc (DI)
 
-This ruleset governs module configuration boundaries, class encapsulation, and the usage of NestJS Dependency Injection.
+Tài liệu này quy định ranh giới Module, cơ chế cô lập mã nguồn, Encapsulation và cách tiêm phụ thuộc chuẩn trong NestJS.
 
 ---
 
-## 💉 Dependency Injection (DI)
-- **No Property Injection**: Do not use the `@Inject()` decorator directly on class properties unless you are injecting a custom symbol/string token. Property injection reduces readability and complicates testing mocks.
-- **Constructor Injection Required**: Define all class dependency injection dependencies via the class constructor parameters. Use the `private readonly` modifier to declare them as class fields automatically:
+## 💉 Tiêm Phụ Thuộc (Dependency Injection)
+- **Cấm tiêm thuộc tính (Property Injection):** Tuyệt đối không dùng `@Inject()` trực tiếp trên thuộc tính của Class trừ trường hợp tiêm các token tùy biến (Custom Tokens). Việc tiêm thuộc tính làm giảm khả năng kiểm thử (mocking) và làm loãng mã nguồn.
+- **Bắt buộc tiêm qua Hàm Khởi Tạo (Constructor Injection):** Sử dụng cơ chế tự động phân giải phụ thuộc của NestJS qua từ khóa `private readonly` trong constructor.
 
-  * **Incorrect (❌ Forbidden)**:
+  * **Không hợp lệ (❌ Cấm viết):**
     ```typescript
     @Injectable()
     export class AuthService {
@@ -16,7 +16,7 @@ This ruleset governs module configuration boundaries, class encapsulation, and t
       private readonly usersService: UsersService;
     }
     ```
-  * **Correct (✔️ Required)**:
+  * **Hợp lệ (✔️ Khuyến khích):**
     ```typescript
     @Injectable()
     export class AuthService {
@@ -26,10 +26,10 @@ This ruleset governs module configuration boundaries, class encapsulation, and t
 
 ---
 
-## 🏗️ Module Boundaries & Encapsulation
-- **Encapsulation by Default**: Providers (Services, Repositories) inside a module are private to that module by default.
-- **Sharing Providers**: If a provider in Module A needs to be consumed in Module B:
-  1. Export the provider inside the `exports` array of Module A's `@Module()` decorator.
-  2. Import Module A into Module B's `imports` array.
-  * Never bypass this encapsulation (e.g. by importing a service directly without importing its parent module).
-- **Global Modules**: Avoid creating global modules (`@Global()`) unless you are providing stable core components (like database connection modules or configuration modules).
+## 🏗️ Ranh Giới Mô-đun & Encapsulation
+- **Cô lập theo mặc định (Encapsulation by Default):** Các Provider (Services, Repositories) bên trong một Module mặc định là private. Các module khác không thể truy cập nếu không được export công khai.
+- **Chia sẻ tài nguyên qua Module:** Khi Module B muốn sử dụng Service của Module A:
+  1. Thêm Service đó vào mảng `exports` trong `@Module()` của Module A.
+  2. Import Module A vào mảng `imports` của Module B.
+  * Nghiêm cấm import trực tiếp Service của Module A vào danh sách `providers` của Module B.
+- **Mô-đun Toàn cục (Global Modules):** Hạn chế sử dụng `@Global()` ngoại trừ các mô-đun hạ tầng chung cực kỳ ổn định (như cơ sở dữ liệu hoặc cấu hình hệ thống).

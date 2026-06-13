@@ -6,7 +6,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-export type ProjectStack = "spring-boot" | "react-ts" | "next-js" | "nestjs" | "express" | "fastapi" | "python-ai";
+export type ProjectStack = "spring-boot" | "react-ts" | "next-js" | "nestjs" | "express" | "fastapi" | "python-ai" | "dotnet";
 
 /**
  * Scans a specific folder directly for manifest configurations.
@@ -118,6 +118,23 @@ async function detectProjectStackDirect(cwd: string): Promise<ProjectStack[]> {
         // Ignore
       }
     }
+  }
+
+  // 4. Detect .NET (files ending in .csproj or .sln, or global.json)
+  try {
+    const entries = await fs.readdir(cwd, { withFileTypes: true });
+    const hasDotnet = entries.some(
+      (entry) =>
+        entry.isFile() &&
+        (entry.name.endsWith(".csproj") ||
+          entry.name.endsWith(".sln") ||
+          entry.name === "global.json")
+    );
+    if (hasDotnet) {
+      stacks.push("dotnet");
+    }
+  } catch {
+    // Ignore
   }
 
   return stacks;

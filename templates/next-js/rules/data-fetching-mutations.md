@@ -1,37 +1,36 @@
-# Data Fetching & Mutations Rules
+# Gọi Dữ Liệu & Đột Biến Dữ Liệu (Data Fetching & Mutations)
 
-This ruleset governs network requests, caching, invalidation, and data mutations using Next.js Server Actions.
-
----
-
-## 🔌 Data Fetching at the Source
-- **RSC Fetching**: Fetch data directly inside async React Server Components (`RSC`). This secures API endpoints, credentials, and minimizes network latency by co-locating the data-gathering execution on the server.
-- **Rules**:
-  - Do not use client-side fetch wrapper utilities inside server pages. Use standard async/await syntax.
+Tài liệu này quy định tiêu chuẩn gọi API, quản lý bộ nhớ đệm (caching) và thay đổi dữ liệu sử dụng Next.js Server Actions.
 
 ---
 
-## 💾 Caching & Revalidation
-- **No Infinite Static Fetching**: Do not call `fetch()` without a caching strategy. Every request must declare its revalidation lifecycle or cache settings explicitly.
+## 🔌 Gọi Dữ Liệu Tại Gốc (Data Fetching at the Source)
+- **Thực hiện trong RSC:** Gọi dữ liệu `fetch()` trực tiếp bên trong các async Server Components (`RSC`). Điều này giúp bảo mật API endpoint, token xác thực và giảm thiểu độ trễ mạng bằng cách gộp xử lý trên server.
+- **Quy tắc:** Không sử dụng các client-side fetch wrapper tùy tiện trong các server pages. Hãy sử dụng cú pháp async/await tiêu chuẩn.
+
+---
+
+## 💾 Quản Lý Bộ Nhớ Đệm (Caching & Revalidation)
+- **Cấm Fetch Thô:** Nghiêm cấm sử dụng fetch() thô mà không có cấu hình kiểm soát vòng đời dữ liệu hoặc chiến lược revalidate rõ ràng.
   
-  * **Incorrect (❌ Forbidden)**:
+  * **Không hợp lệ (❌ Nghiêm cấm):**
     ```typescript
-    // Fetches static data infinitely without any revalidation strategy
+    // Fetch dữ liệu tĩnh vô thời hạn mà không có chiến lược revalidate rõ ràng
     const res = await fetch('https://api.skillverse.vn/v1/courses');
     ```
-  * **Correct (✔️ Required)**:
+  * **Hợp lệ (✔️ Khuyến khích):**
     ```typescript
-    // Configures Incremental Static Regeneration (ISR) with cache tags
+    // Cấu hình ISR (Incremental Static Regeneration) rõ ràng với cache tag
     const res = await fetch('https://api.skillverse.vn/v1/courses', { 
       next: { revalidate: 3600, tags: ['courses'] } 
     });
     ```
-- **Caching Revalidation**: Use `revalidatePath` or `revalidateTag` inside Server Actions to purge old query entries and force Next.js cache updates.
+- **Làm mới bộ nhớ đệm:** Sử dụng `revalidatePath` hoặc `revalidateTag` bên trong các Server Actions để xóa các bản ghi cũ trong cache và bắt buộc Next.js cập nhật lại dữ liệu mới.
 
 ---
 
-## ⚡ Mutations via Server Actions
-- **Server Actions Requirement**: All write operations (POST, PUT, DELETE, PATCH) must be routed through Next.js Server Actions. Mark them explicitly with the `"use server"` directive at the top of the function or file block.
-- **Component Interactivity Guidelines**:
-  - Wrap forms using the React hook `useActionState` (or `useFormState` in earlier React 19 release candidates) to manage processing states (`isPending`) and capture server response payloads (errors, success messages).
-  - Wrap action mutations in `useTransition` to keep the UI interactive and prevent screen freezing during background processing.
+## ⚡ Đột Biến Dữ Liệu (Mutations via Server Actions)
+- **Sử dụng Server Actions:** Toàn bộ các tương tác POST, PUT, DELETE, PATCH phải qua Server Actions được đánh dấu bằng directive `"use server"` ở đầu hàm hoặc đầu file chứa hành động.
+- **Trải nghiệm người dùng mượt mà:**
+  - Sử dụng hook `useActionState` (hoặc `useFormState` trong các phiên bản trước React 19) để quản lý trạng thái phản hồi của form từ server và kiểm soát trạng thái đang xử lý (`isPending`).
+  - Bọc các tác vụ mutate trong `useTransition` nhằm duy trì giao diện người dùng mượt mà, không bị đóng băng trong quá trình xử lý ngầm.

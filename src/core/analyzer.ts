@@ -61,6 +61,13 @@ export interface PythonAiContext {
   hasHardwareLibraries: boolean;
 }
 
+export interface DotnetContext {
+  solutionName: string;
+  projectNames: string[];
+  dotnetVersion: string;
+  testProjects: string[];
+}
+
 export interface AnalysisContext {
   "spring-boot"?: SpringBootContext;
   "react-ts"?: ReactTsContext;
@@ -69,6 +76,7 @@ export interface AnalysisContext {
   "express"?: ExpressContext;
   "fastapi"?: FastAPIContext;
   "python-ai"?: PythonAiContext;
+  "dotnet"?: DotnetContext;
 }
 
 /**
@@ -608,8 +616,95 @@ export async function analyzeModule(dir: string, stacks: ProjectStack[]): Promis
       context["fastapi"] = await analyzeFastApi(dir);
     } else if (stack === "python-ai") {
       context["python-ai"] = await analyzePythonAi(dir);
+    } else if (stack === "dotnet") {
+      context["dotnet"] = await analyzeDotnet(dir);
     }
   }
 
   return context;
+}
+
+/**
+ * Analyzes dotnet project details.
+ */
+async function analyzeDotnet(dir: string): Promise<DotnetContext> {
+  let solutionName = path.basename(dir);
+  const projectNames: string[] = [];
+  const testProjects: string[] = [];
+  let dotnetVersion = "8.0";
+
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    
+    // Find .sln file
+    const slnFile = entries.find(e => e.isFile() && e.name.endsWith(".sln"));
+    if (slnFile) {
+      solutionName = path.parse(slnFile.name).name;
+    }
+
+    // Find all .csproj files (recursively)
+    const csprojFiles = await findCsprojFiles(dir);
+    for (const file of csprojFiles) {
+      const projName = path.parse(file).name;
+      try {
+        const content = await fs.readFile(file, "utf8");
+        if (content.includes("Microsoft.NET.Test.Sdk") || projName.toLowerCase().includes("test")) {
+          testProjects.push(projName);
+        } else {
+          projectNames.push(projName);
+        }
+
+        // Try to parse TargetFramework
+        const match = content.match(/<TargetFramework>net([\d\.]+)<\/TargetFramework>/);
+        if (match && match[1]) {
+          dotnetVersion = match[1];
+        }
+      } catch {
+        projectNames.push(projName);
+      }
+    }
+  } catch {
+    // Keep defaults
+  }
+
+  return {
+    solutionName,
+    projectNames,
+    dotnetVersion,
+    testProjects,
+  };
+}
+
+async function findCsprojFiles(dir: string): Promise<string[]> {
+  const files: string[] = [];
+  async function traverse(currentDir: string) {
+    if (files.length >= 20) return;
+    try {
+      const entries = await fs.readdir(currentDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (files.length >= 20) return;
+        const fullPath = path.join(currentDir, entry.name);
+        if (entry.isDirectory()) {
+          if (
+            entry.name.startsWith(".") ||
+            entry.name === "node_modules" ||
+            entry.name === "bin" ||
+            entry.name === "obj" ||
+            entry.name === "target" ||
+            entry.name === "build" ||
+            entry.name === "dist"
+          ) {
+            continue;
+          }
+          await traverse(fullPath);
+        } else if (entry.isFile() && entry.name.endsWith(".csproj")) {
+          files.push(fullPath);
+        }
+      }
+    } catch {
+      // Ignore
+    }
+  }
+  await traverse(dir);
+  return files;
 }

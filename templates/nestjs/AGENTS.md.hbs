@@ -1,85 +1,38 @@
-## NestJS + TypeScript Guidelines
+## 🗺️ Hướng Dẫn Phát Triển NestJS (Node.js Backend)
 
-### 🔄 End-to-End Agent Development Lifecycle
-AI Agents must execute all NestJS tasks following this structured 5-stage lifecycle:
-1. **Design & Code:** Implement layers following Module-driven conventions. Keep controllers thin and place logic in Services.
-2. **Comprehensive Testing:** Write unit tests for services using mocks (`.spec.ts`) and end-to-end (E2E) integration tests using Supertest.
-3. **Code Quality & Validation:** Verify and execute validations:
-   - Linting check: `{{runCommand}} lint`
-   - Type checking: `{{runCommand}} typecheck`
-   - Unit tests: `{{runCommand}} test` (or `{{runCommand}} test -- --run` in CI/CD)
-   - Production build: `{{runCommand}} build`
-4. **Dependency Management:** Install new packages using `{{packageManager}} add [package_name]` (or `npm install [package_name]` if using npm). Never manually modify the lock file `{{lockFile}}`.
-
----
-
-### 🏗️ Architecture & Module Conventions
-NestJS enforces a strictly **Module-Driven** architecture. Structure each module folder to encapsulate its internal controllers, services, guards, and entity layers:
-
-```text
-src/
-  auth/
-    dto/
-      login-request.dto.ts
-    entities/
-      user.entity.ts
-    guards/
-      roles.guard.ts
-    auth.module.ts
-    auth.controller.ts
-    auth.service.ts
-```
-
-Refer to specialized guideline files for detailed rules:
-- Naming & Coding Style: `@nestjs-style.md`
-- Module Boundaries & Dependency Injection: `@module-architecture.md`
-- Input Validation & Exception Filters: `@validation-errors.md`
+### 🔄 Vòng Đời Phát Triển Tác Nhân (Agent Development Lifecycle)
+Tác nhân AI phải thực hiện tất cả các nhiệm vụ NestJS theo quy trình 5 bước sau:
+1. **Thiết kế & Lập trình:** Triển khai các lớp nghiệp vụ tuân thủ cấu trúc Module-driven. Giữ Controller mỏng, đặt 100% logic nghiệp vụ trong Service.
+2. **Kiểm thử Toàn diện:** Viết unit test cho các Service sử dụng Jest Mocking (`.spec.ts`) và viết kiểm thử tích hợp đầu cuối (E2E) sử dụng Supertest.
+3. **Chất lượng Mã nguồn:** Chạy các lệnh kiểm tra lỗi cú pháp và kiểu dữ liệu:
+   - Kiểm tra Lint: `{{runCommand}} lint`
+   - Kiểm tra Kiểu dữ liệu: `{{runCommand}} typecheck`
+   - Chạy Kiểm thử: `{{runCommand}} test` (hoặc `{{runCommand}} test -- --run` cho môi trường CI/CD)
+   - Chạy Build thử nghiệm: `{{runCommand}} build`
+4. **Quản lý Thư viện:** Cài đặt các thư viện mới bằng lệnh: `{{packageManager}} add [tên_thư_viện]`. Tuyệt đối cấm sửa thủ công file lock `{{lockFile}}`.
 
 ---
 
-### 💉 Dependency Injection (DI)
-- **No Property Injection**: Do not use the `@Inject()` decorator directly on class properties unless injecting a custom string/symbol token.
-- **Constructor Injection**: Always resolve dependency injections via the class constructor using `private readonly` access modifiers:
-  ```typescript
-  @Injectable()
-  export class AuthService {
-    constructor(private readonly usersService: UsersService) {}
-  }
-  ```
+### 🏗️ Kiến Trúc Hệ Thống Bản Mẫu (Template Blueprint)
+Vui lòng tham khảo các tài liệu quy tắc chi tiết dưới đây:
+- Hướng dẫn coding style chuẩn TypeScript, quy tắc căn lề, sắp xếp decorator và tổ chức mã nguồn sạch: `@nestjs-style.md`
+- Quy định chặt chẽ về ranh giới Module, cơ chế cô lập mã nguồn, Encapsulation và chia sẻ tài nguyên: `@module-architecture.md`
+- Cấu hình Class Validator, chuyển đổi dữ liệu thông qua ValidationPipe và xử lý lỗi tập trung bằng Exceptions Filters: `@validation-errors.md`
+- Quy trình tự động sinh trọn bộ cấu phần gồm Module, Controller, Service, DTO, Entity theo đúng chuẩn hệ thống: `@SKILL.md`
 
 ---
 
-### 🛡️ Input Validation & DTOs
-- **DTOs Required**: Declare all request payloads (`@Body()`, `@Query()`, `@Param()`) using explicit DTO classes decorated with `class-validator` markers.
-- **Global Validation Pipe**: Activate a global validation pipe in `main.ts` to automatically strip unwhitelisted fields and parse types:
-  ```typescript
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
-  ```
+### 🏛️ Quy Tắc Phát Triển Nghiêm Ngặt
 
----
+#### 1. Tiêm Phụ Thuộc (Dependency Injection)
+- **Cấm tiêm thuộc tính (Property Injection):** Tuyệt đối không dùng `@Inject()` trực tiếp trên thuộc tính của Class trừ trường hợp tiêm các token tùy biến (Custom Tokens).
+- **Bắt buộc tiêm qua Hàm Khởi Tạo (Constructor Injection):** Sử dụng cơ chế tự động phân giải phụ thuộc của NestJS qua từ khóa `private readonly`.
 
-### 🚨 Unified Exception Handling
-- **No raw exceptions**: Never expose raw system exceptions (like database errors or parsing stack traces) to the client.
-- **HTTP Exceptions**: Catch errors at the Service layer and throw appropriate NestJS HTTP exceptions (`NotFoundException`, `BadRequestException`, `ForbiddenException`).
-- **Global Filter**: Map errors consistently using a global Exception Filter to format output JSON payloads:
-  ```json
-  {
-    "success": false,
-    "statusCode": 404,
-    "timestamp": "2026-06-13T06:48:24.000Z",
-    "path": "/api/v1/courses/999",
-    "message": "Course does not exist."
-  }
-  ```
+#### 2. Kiểm Thử Dữ Liệu Đầu Vào (Validation & Transformation)
+- **Định hình DTO nghiêm ngặt:** Toàn bộ dữ liệu đầu vào của HTTP Request (`@Body()`, `@Query()`, `@Param()`) phải được đặc tả qua các lớp DTO sử dụng decorator từ `class-validator`.
+- **Kích hoạt ống lọc toàn cục (Global Validation Pipe):** Khai báo tại file `main.ts` để tự động lọc bỏ các thuộc tính không nằm trong danh sách trắng (whitelist) và tự động ép kiểu dữ liệu (transform).
 
----
-
-### 🧪 Testing Standards
-- **Unit Tests**: Place tests in `.spec.ts` files adjacent to code. Mock dependencies using mock providers or mock interfaces.
-- **E2E Tests**: Implement integration flow tests in `.e2e-spec.ts` files inside a separate test setup folder. Execute them using `supertest`.
+#### 3. Quản Lý Ngoại Lệ Toàn Cục (Unified Exception Handling)
+- **Cấm trả về lỗi hệ thống thô:** Tuyệt đối không để lộ lỗi thô (chẳng hạn như lỗi từ DB) ra ngoài client với mã lỗi 500.
+- **Sử dụng HttpExceptions tích hợp:** Bắt buộc phải bắt lỗi (try/catch) ở tầng Service và ánh xạ sang các Http Exception tường minh của NestJS (`NotFoundException`, `BadRequestException`, `ForbiddenException`).
+- **Tập trung hóa bằng Exception Filter:** Xây dựng một Filter toàn cục để cấu trúc lại định dạng JSON trả về cho Client một cách đồng nhất.

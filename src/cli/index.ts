@@ -22,12 +22,12 @@ export function runCli() {
   program
     .name("agent-workflow-kit")
     .description("Generate AI coding workflows/rules/templates for Codex and Antigravity")
-    .version("1.3.1");
+    .version("1.3.2");
 
   program
     .command("init")
     .description("Initialize agent guidelines and skills for the repository")
-    .option("--stack <stack>", "Specify target stack: auto | spring-boot | react-ts | next-js | nestjs | express | fastapi", "auto")
+    .option("--stack <stack>", "Specify target stack: auto | spring-boot | react-ts | next-js | nestjs | express | fastapi | dotnet", "auto")
     .option("--agent <agent>", "Specify target agent profile: both | codex | antigravity", "both")
     .option("--dry-run", "Output actions to console without writing any files", false)
     .action(async (options) => {

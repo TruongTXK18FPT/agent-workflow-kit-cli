@@ -115,6 +115,9 @@ npx agent-workflow-kit-cli doctor || exit 1
       ) {
         console.log(chalk.gray("Running: npx tsc --noEmit"));
         await execa("npx", ["tsc", "--noEmit"], { cwd, stdio: "inherit" });
+      } else if (stack === "dotnet") {
+        console.log(chalk.gray("Running: dotnet build"));
+        await execa("dotnet", ["build"], { cwd, stdio: "inherit" });
       }
       console.log(chalk.green(`✔️ ${stack} validation passed!`));
     } catch (err) {

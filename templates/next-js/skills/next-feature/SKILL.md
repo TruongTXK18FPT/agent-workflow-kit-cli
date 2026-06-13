@@ -1,25 +1,25 @@
 ---
 name: next-feature
-description: Generates or extends a Next.js + TypeScript page or route handler with caching and metadata
+description: Sinh hoặc mở rộng một page hoặc route handler Next.js + TypeScript mới kèm caching và metadata
 ---
 
-Follow this workflow to create a new Next.js page, layout, or route handler.
+Tuân thủ quy trình này để tạo một page, layout hoặc API route handler mới trong Next.js.
 
-Inputs:
-- featureName: Name of the route or page (e.g., `dashboard`)
-- targetPath: The route folder inside `app/` to extend
-- userFlow: Brief description of the page's behavior and layout
+Đầu vào (Inputs):
+- featureName: Tên của route hoặc trang (ví dụ: `dashboard`)
+- targetPath: Thư mục chứa route bên trong `app/` để triển khai
+- userFlow: Mô tả tóm tắt hành vi và bố cục giao diện của trang
 
-Steps:
-1. Inspect neighboring directories under `app/` and identify existing layouts and error boundaries.
-2. Formulate the path structure using Next.js app conventions (e.g. `app/(dashboard)/billing`).
-3. Set up page parameters and query parameters interface.
-4. Implement the page or layout as a **React Server Component (RSC)**.
-5. If search or form inputs are present, create client-rendered leaves (RCC) marked with `"use client"` and import them into the RSC page.
-6. Declare a caching strategy for all `fetch` data operations.
-7. Set up dynamic metadata via `generateMetadata` or static metadata export.
-8. Wire error elements (`error.tsx`) at the nearest route folder to catch runtime issues.
-9. Run validations:
+Các bước thực hiện (Steps):
+1. Quét các thư mục lân cận trong `app/` để tham chiếu các layout chung và ranh giới xử lý lỗi (`error.tsx`).
+2. Thiết lập cấu trúc thư mục route theo chuẩn Next.js (ví dụ: `app/(dashboard)/billing`).
+3. Khai báo interface cho route params và query parameters.
+4. Triển khai cấu trúc trang hoặc layout dưới dạng **React Server Component (RSC)**.
+5. Nếu có tương tác người dùng hoặc form, hãy tách thành các component con cấp lá (RCC) được đánh dấu `"use client"` rồi import vào RSC.
+6. Thiết lập cơ chế cache rõ ràng cho toàn bộ các thao tác gọi dữ liệu `fetch()`.
+7. Cấu hình metadata tĩnh hoặc động thông qua hàm `generateMetadata`.
+8. Định nghĩa file xử lý lỗi cục bộ (`error.tsx`) tại thư mục route gần nhất để bắt lỗi runtime.
+9. Thực hiện kiểm tra lỗi cục bộ:
    - `{{runCommand}} lint`
    - `{{runCommand}} typecheck`
    - `{{runCommand}} test`

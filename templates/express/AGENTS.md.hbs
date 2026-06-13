@@ -1,56 +1,41 @@
-## Express.js + TypeScript Guidelines
+## 🗺️ Hướng Dẫn Phát Triển Express.js (Node.js Backend)
 
-### 🔄 End-to-End Agent Development Lifecycle
-AI Agents must execute all Express.js tasks following this structured 5-stage lifecycle:
-1. **Design & Code:** Implement layers following standard 3-tier MVC architecture. Never write spaghetti code.
-2. **Comprehensive Testing:** Write unit tests for services using Jest and integration tests using Supertest.
-3. **Code Quality & Validation:** Verify and execute validations:
-   - Linting check: `{{runCommand}} lint`
-   - Type checking: `{{runCommand}} typecheck`
-   - Unit tests: `{{runCommand}} test` (or `{{runCommand}} test -- --run` in CI/CD)
-   - Production build: `{{runCommand}} build`
-4. **Dependency Management:** Install new packages using `{{packageManager}} add [package_name]` (or `npm install [package_name]` if using npm). Never manually modify the lock file `{{lockFile}}`.
-
----
-
-### 🏗️ Architecture & Folder Conventions
-To avoid spaghetti code, separate concerns strictly into a 3-tier layout:
-
-```text
-src/
-  config/               # Environment variables, database configs
-  middlewares/          # Request interceptors (auth, zod validation, loggers)
-  models/               # Database schemas (Mongoose, Sequelize, Prisma)
-  routes/               # HTTP route declarations and middleware bindings
-  controllers/          # Request/response coordinators
-  services/             # 100% of the core business logic and database writes
-  utils/                # Global helper utilities
-  app.ts                # Application startup file
-```
-
-Refer to specialized guideline files for detailed rules:
-- Naming & Code Styles: `@express-style.md`
-- Routing & Controller Boundaries: `@router-controller.md`
-- Async Error Catching & Global Handler: `@error-handling.md`
+### 🔄 Vòng Đời Phát Triển Tác Nhân (Agent Development Lifecycle)
+Tác nhân AI phải thực hiện tất cả các nhiệm vụ Express.js theo quy trình 5 bước sau:
+1. **Thiết kế & Lập trình:** Phân tách mã nguồn theo cấu trúc 3 lớp rõ ràng (3-Tier Architecture). Tuyệt đối cấm viết mã nguồn lộn xộn (Spaghetti Code).
+2. **Kiểm thử Toàn diện:** Viết unit test cho các Service sử dụng Jest và kiểm thử tích hợp API sử dụng Supertest.
+3. **Chất lượng Mã nguồn:** Chạy các lệnh kiểm tra lỗi cú pháp và kiểu dữ liệu:
+   - Kiểm tra Lint: `{{runCommand}} lint`
+   - Kiểm tra Kiểu dữ liệu: `{{runCommand}} typecheck`
+   - Chạy Kiểm thử: `{{runCommand}} test` (hoặc `{{runCommand}} test -- --run` cho môi trường CI/CD)
+   - Chạy Build thử nghiệm: `{{runCommand}} build`
+4. **Quản lý Thư viện:** Cài đặt các thư viện mới bằng lệnh: `{{packageManager}} add [tên_thư_viện]`. Tuyệt đối cấm sửa thủ công file lock `{{lockFile}}`.
 
 ---
 
-### 🏛️ Strict Layer Separation
-Maintain a strict data flow pipeline:
+### 🏗️ Kiến Trúc Hệ Thống Bản Mẫu (Template Blueprint)
+Vui lòng tham khảo các tài liệu quy tắc chi tiết dưới đây:
+- Quy ước viết mã sạch, định nghĩa kiểu dữ liệu tường minh bằng TypeScript trong môi trường Express: `@express-style.md`
+- Phân định ranh giới trách nhiệm: Router nhận diện đường dẫn $\rightarrow$ Controller điều phối $\rightarrow$ Service xử lý core logic: `@router-controller.md`
+- Chiến lược xử lý lỗi bất đồng bộ (Async Error Catching) và cơ chế vận hành Middleware xử lý lỗi tập trung: `@error-handling.md`
+- Workflow chuẩn hóa giúp sinh mới một cụm API Endpoint an toàn, đầy đủ từ Router, Controller đến Validator: `@SKILL.md`
+
+---
+
+### 🏛️ Quy Tắc Phát Triển Nghiêm Ngặt
+
+#### 1. Phân Tách Lớp Tuyệt Đối (Strict Layer Separation)
+Tác nhân phải tuân thủ nghiêm ngặt chuỗi truyền dẫn dữ liệu:
 $$\text{Client} \longrightarrow \text{Router} \longrightarrow \text{Middleware} \longrightarrow \text{Controller} \longrightarrow \text{Service} \longrightarrow \text{Model/Database}$$
-- **Router**: Mapping routes only. No business or coordination logic.
-- **Controller**: Extract payloads (`req.body`, `req.query`, `req.params`), call the Service, and return response payloads using `res.status().json()`. Do not call the DB models directly.
-- **Service**: 100% database queries and calculations. Never reference Express's `req` or `res` objects.
+- **Router:** Tuyệt đối không chứa logic xử lý, chỉ ánh xạ HTTP Method + Path và liên kết middleware xác thực/kiểm duyệt.
+- **Controller:** Chỉ bóc tách dữ liệu từ `req` (req.body, req.query, req.params), gọi lớp Service xử lý, nhận kết quả và trả về thông qua `res.status().json()`. Không làm việc trực tiếp với cơ sở dữ liệu.
+- **Service:** Nơi chứa logic nghiệp vụ, tính toán thuật toán, tương tác với lớp DB Model. Tuyệt đối không được tiếp xúc hay phụ thuộc vào các đối tượng `req` hay `res` của Express để đảm bảo tính độc lập khi viết Unit Test.
 
----
+#### 2. Bẫy Lỗi Bất Đồng Bộ (Async Error Handling)
+- **Không dùng try/catch thủ công tại Controller:** Việc viết try/catch ở mọi hàm trong tất cả các controller gây loãng mã nguồn.
+- **Sử dụng Wrapper Tự động:** Toàn bộ các hàm controller bất đồng bộ phải được bọc bằng một hàm tiện ích tự động bắt lỗi (như `express-async-handler`) để tự động chuyển tiếp tất cả các ngoại lệ phát sinh sang cấu phần `next()`.
+- **Middleware xử lý lỗi tập trung (Global Error Handler):** Bắt buộc phải khai báo middleware xử lý lỗi có đủ 4 tham số ở cuối tệp cấu hình server (sau khi khai báo tất cả các routes) để định dạng lại toàn bộ phản hồi lỗi.
 
-### 🚨 Async Error Handling
-- **No raw controller try/catch**: Do not duplicate try/catch blocks across controllers.
-- **Async Wrapper**: Wrap all async controller functions in a custom handler wrapper (e.g. `express-async-handler` or custom helper) to automatically forward exceptions to `next(error)`.
-- **Global Error Handler**: Declare a global error boundary middleware at the bottom of the middleware chain in `app.ts` to format JSON payloads consistently.
-
----
-
-### 🛡️ Schema-Driven Request Validation
-- **No manual check**: Do not write if-statement validator conditions in controllers.
-- **Zod Middleware**: Use **Zod** schema schemas loaded dynamically inside a custom middleware to validate request payloads before they reach the controllers.
+#### 3. Kiểm Thử Dữ Liệu Tự Động Với Zod Middleware
+- **Cấm Validate thủ công bằng câu lệnh điều kiện:** Không viết các đoạn code `if (!req.body.email)`.
+- **Xây dựng Middleware Validate Schema:** Phát triển một middleware dùng chung nhận vào một Schema của Zod để tự động kiểm duyệt toàn bộ dữ liệu đầu vào (body, query, params) trước khi cho phép dữ liệu đi sâu vào tầng Controller.

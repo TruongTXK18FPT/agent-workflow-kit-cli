@@ -166,7 +166,7 @@ export async function buildRepositoryContext(workspaceRoot: string): Promise<Rep
 
   // Determine default architecture style based on stack
   let architecture = "layered";
-  if (mainStack === "spring-boot") {
+  if (mainStack === "spring-boot" || mainStack === "dotnet") {
     architecture = "clean-architecture";
   } else if (mainStack === "react-ts" || mainStack === "next-js") {
     architecture = "feature-first";
@@ -190,6 +190,8 @@ export async function buildRepositoryContext(workspaceRoot: string): Promise<Rep
     frameworks.push("junit", "mockito");
   } else if (mainStack === "fastapi") {
     frameworks.push("pytest");
+  } else if (mainStack === "dotnet") {
+    frameworks.push("xunit", "moq");
   }
 
   const testing: TestingStrategy = {
@@ -207,6 +209,8 @@ export async function buildRepositoryContext(workspaceRoot: string): Promise<Rep
     validationLibraries.push("class-validator");
   } else if (mainStack === "fastapi") {
     validationLibraries.push("pydantic");
+  } else if (mainStack === "dotnet") {
+    validationLibraries.push("fluentvalidation");
   }
 
   const registry = await loadAWOSPlugins(workspaceRoot);

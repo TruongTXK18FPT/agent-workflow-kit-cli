@@ -1,32 +1,32 @@
-# Next.js Coding Style & Conventions Rules
+# Quy Ước Đặt Tên & Coding Style cho Next.js (App Router)
 
-This ruleset outlines files naming conventions, imports, and folder structures for Next.js App Router projects.
+Tài liệu này đặc tả quy ước đặt tên file, thư mục, cấu trúc import và tổ chức folder trong các dự án Next.js App Router.
 
 ---
 
-## 🏷️ Naming Conventions
+## 🏷️ Quy Ước Đặt Tên (Naming Conventions)
 
-| Object | Convention | Example |
+| Đối Tượng | Quy Chuẩn Đặt Tên | Ví Dụ Minh Họa |
 | :--- | :--- | :--- |
-| **Route Directory (`app/`)** | lowercase or kebab-case | `app/dashboard/`, `app/user-profile/` |
-| **Route Groups** | Bọc in parenthesis `(group-name)` | `app/(auth)/login/`, `app/(dashboard)/layout.tsx` |
-| **Dynamic Routes** | Bọc in brackets `[paramName]` | `app/blog/[id]/page.tsx`, `app/shop/[...slug]/page.tsx` |
-| **Special Layout Files** | Standard Next.js names (lowercase) | `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx` |
-| **Route Handlers** | Next.js API endpoint name | `route.ts` |
-| **UI Components** | PascalCase | `Button.tsx`, `ProductCard.tsx`, `SidebarSkeleton.tsx` |
-| **Custom Hooks** | camelCase starting with `use` | `useAuth.ts`, `useLocalStorage.ts` |
+| **Thư mục Route (`app/`)** | lowercase hoặc kebab-case | `app/dashboard/`, `app/user-profile/` |
+| **Route Nhóm (Route Groups)** | Bọc trong dấu ngoặc đơn `(group-name)` | `app/(auth)/login/`, `app/(dashboard)/layout.tsx` |
+| **Route Động (Dynamic Routes)** | Bọc trong dấu ngoặc vuông `[paramName]` | `app/blog/[id]/page.tsx`, `app/shop/[...slug]/page.tsx` |
+| **Tệp Giao Diện Đặc Trưng** | Định dạng chuẩn Next.js (lowercase.tsx) | `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx` |
+| **Route Handlers** | Định dạng file API endpoint của Next.js | `route.ts` |
+| **Component UI Phụ Trợ** | PascalCase.tsx | `Button.tsx`, `ProductCard.tsx`, `SidebarSkeleton.tsx` |
+| **Custom Hooks** | camelCase bắt đầu bằng tiền tố `use` | `useAuth.ts`, `useLocalStorage.ts` |
 
 ---
 
 ## 📦 Imports & Aliasing
-- **Absolute Imports**: Always use absolute imports with `@/` aliasing pointing to `src/` or root directory (e.g. `import { Button } from "@/components/ui/Button"`). Do not use relative imports containing deep directory jumps (e.g. `../../../../Button`).
-- **CSS / Styles Imports**: Place global styles inside a single file (like `globals.css` or `index.css`) imported inside the root `layout.tsx`. Do not import CSS files arbitrarily in layout sub-components.
+- **Absolute Imports:** Luôn luôn sử dụng absolute imports với alias `@/` trỏ tới thư mục `src/` hoặc root (ví dụ: `import { Button } from "@/components/ui/Button"`). Nghiêm cấm sử dụng relative imports với nhiều tầng nhảy thư mục sâu (ví dụ: `../../../../Button`).
+- **CSS / Styles Imports:** Đặt các styles toàn cục trong một file duy nhất (như `globals.css` hoặc `index.css`) được import trong file `layout.tsx` gốc. Không import file CSS tùy tiện trong các component con.
 
 ---
 
-## 📁 Folder Organization
-- Keep the folders inside `app/` exclusively dedicated to routing declarations.
-- Place feature components, hooks, services, and types inside a dedicated `features/` directory outside or inside `src/`. For example:
+## 📁 Tổ Chức Thư Mục (Folder Organization)
+- Giữ các thư mục bên trong `app/` dành riêng cho việc khai báo routing và giao diện trang tương ứng.
+- Đặt các component nghiệp vụ, hook, service và type bên trong thư mục `src/features/` hoặc `src/components/` bên ngoài thư mục `app/`. Mỗi feature (ví dụ: `billing`) nên đóng gói các tài nguyên liên quan:
   - `src/features/billing/components/BillingForm.tsx`
   - `src/features/billing/hooks/useBilling.ts`
-  Expose public APIs for feature components using a clean index file (`index.ts`).
+- Xuất bản public APIs của feature qua một file `index.ts` sạch sẽ.

@@ -204,4 +204,44 @@ spring:
     
     await fs.unlink(path.join(tmpDir, "package-lock.json"));
   });
+
+  it("should analyze dotnet properties and solutions correctly", async () => {
+    // 1. Solution file
+    await fs.writeFile(path.join(tmpDir, "MySolution.sln"), "", "utf8");
+
+    // 2. Regular project
+    const projDir = path.join(tmpDir, "src/MyProject");
+    await fs.mkdir(projDir, { recursive: true });
+    await fs.writeFile(
+      path.join(projDir, "MyProject.csproj"),
+      `<Project Sdk="Microsoft.NET.Sdk">
+        <PropertyGroup>
+          <TargetFramework>net8.0</TargetFramework>
+        </PropertyGroup>
+      </Project>`,
+      "utf8"
+    );
+
+    // 3. Test project
+    const testProjDir = path.join(tmpDir, "tests/MyProject.Tests");
+    await fs.mkdir(testProjDir, { recursive: true });
+    await fs.writeFile(
+      path.join(testProjDir, "MyProject.Tests.csproj"),
+      `<Project Sdk="Microsoft.NET.Sdk">
+        <ItemGroup>
+          <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+        </ItemGroup>
+      </Project>`,
+      "utf8"
+    );
+
+    const context = await analyzeModule(tmpDir, ["dotnet"]);
+    const dotnet = context["dotnet"];
+
+    expect(dotnet).toBeDefined();
+    expect(dotnet?.solutionName).toBe("MySolution");
+    expect(dotnet?.dotnetVersion).toBe("8.0");
+    expect(dotnet?.projectNames).toContain("MyProject");
+    expect(dotnet?.testProjects).toContain("MyProject.Tests");
+  });
 });

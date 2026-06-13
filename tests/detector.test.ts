@@ -165,5 +165,23 @@ describe("Stack Detector", () => {
     stacks = await detectProjectStack(tmpDir);
     expect(stacks).toContain("express");
     expect(stacks).not.toContain("nestjs");
+
+    // 5. dotnet (via .csproj)
+    await fs.writeFile(path.join(tmpDir, "MyProject.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\"></Project>", "utf8");
+    stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("dotnet");
+    await fs.unlink(path.join(tmpDir, "MyProject.csproj"));
+
+    // 6. dotnet (via .sln)
+    await fs.writeFile(path.join(tmpDir, "Solution.sln"), "", "utf8");
+    stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("dotnet");
+    await fs.unlink(path.join(tmpDir, "Solution.sln"));
+
+    // 7. dotnet (via global.json)
+    await fs.writeFile(path.join(tmpDir, "global.json"), "{}", "utf8");
+    stacks = await detectProjectStack(tmpDir);
+    expect(stacks).toContain("dotnet");
+    await fs.unlink(path.join(tmpDir, "global.json"));
   });
 });

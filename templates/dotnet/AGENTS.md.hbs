@@ -1,0 +1,53 @@
+## 🗺️ Hướng Dẫn Phát Triển .NET (C#)
+
+Dự án này là một ứng dụng .NET (C#), được tổ chức và cấu hình như sau:
+- **Tên Solution:** `{{solutionName}}`
+- **Phiên bản .NET:** `net{{dotnetVersion}}`
+- **Các dự án thành phần:** 
+  {{#each projectNames}}
+  - `{{this}}`
+  {{/each}}
+- **Các dự án kiểm thử (Test Projects):**
+  {{#each testProjects}}
+  - `{{this}}`
+  {{/each}}
+
+---
+
+### 🔄 Vòng Đời Phát Triển Tác Nhân (Agent Development Lifecycle)
+Tác nhân AI phải thực hiện tất cả các nhiệm vụ .NET theo quy trình 5 bước sau:
+1. **Thiết kế & Lập trình:** Triển khai các lớp nghiệp vụ tuân thủ cấu trúc Clean Architecture / Onion Architecture. Đặt Core Logic trong Application/Domain layer độc lập.
+2. **Kiểm thử Toàn diện:** Viết unit test cho các Service sử dụng xUnit và Moq.
+3. **Chất lượng Mã nguồn:** Chạy các lệnh kiểm tra lỗi cú pháp và kiểu dữ liệu:
+   - Chạy Build kiểm tra: `dotnet build`
+   - Chạy Kiểm thử: `dotnet test`
+4. **Quản lý Thư viện:** Thêm các gói NuGet mới qua lệnh: `dotnet add package [tên_gói]`.
+
+---
+
+### 🏗️ Kiến Trúc Hệ Thống Bản Mẫu (Template Blueprint)
+Vui lòng tham khảo các tài liệu quy tắc chi tiết dưới đây:
+- Quy ước coding style chuẩn C#, PascalCase, camelCase và tiền tố Interface: `@csharp-style.md`
+- Quy định đăng ký và sử dụng Dependency Injection (Transient, Scoped, Singleton): `@dependency-injection.md`
+- Phân định trách nhiệm API Controller và điều phối luồng xử lý: `@api-structure.md`
+- Cấu hình FluentValidation và middleware xử lý ngoại lệ tập trung: `@error-handling-validation.md`
+- Quy trình từng bước sinh mới API Controller, DTO, Request Validator: `@SKILL.md`
+
+---
+
+### 🏛️ Quy Tắc Phát Triển Nghiêm Ngặt
+
+#### 1. Kiến Trúc Sạch (Clean Architecture)
+Phân tách rõ ràng các tầng trách nhiệm:
+- **Domain:** Chứa Entities, Value Objects, Domain Logic. Tuyệt đối không phụ thuộc vào bất kỳ thư viện ngoài nào.
+- **Application:** Chứa Interfaces, DTOs, Use Cases (Services/Queries/Commands). Chỉ phụ thuộc vào Domain layer.
+- **Infrastructure:** Chứa Data Access (EF Core), External Services. Phụ thuộc vào Application layer.
+- **Presentation (API):** Chứa Controllers, Middlewares. Điểm khởi chạy của ứng dụng.
+
+#### 2. Đăng Ký Dependency Injection (DI)
+- Sử dụng constructor injection để tiêm các dịch vụ cần thiết qua các interface.
+- Tuyệt đối cấm sử dụng Service Locator pattern (ví dụ: giải quyết dependencies thủ công qua `IServiceProvider` trong runtime).
+
+#### 3. Kiểm Thử Dữ Liệu Tự Động Với FluentValidation
+- Toàn bộ dữ liệu đầu vào của API Request phải được kiểm duyệt tự động thông qua các class Validator thừa kế từ `AbstractValidator<T>` của thư viện FluentValidation.
+- Không viết code validate thủ công bằng các câu lệnh `if` rải rác trong Controller.

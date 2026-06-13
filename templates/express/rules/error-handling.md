@@ -1,36 +1,36 @@
-# Error Handling & Validation Rules
+# Bẫy Lỗi Bất Đồng Bộ & Xác Thực Dữ Liệu Tự Động (Zod Middleware)
 
-This ruleset governs asynchronous error trapping, global exception response formatting, and input validation middlewares for Express.js.
+Tài liệu này quy định chiến lược xử lý lỗi bất đồng bộ (Async Error Catching), cấu hình Middleware xử lý lỗi tập trung, và tự động kiểm tra dữ liệu bằng Zod.
 
 ---
 
-## 🚨 Asynchronous Error Handling (asyncHandler)
-- **No Manual Controller try/catch**: Avoid writing repetitive `try/catch` blocks inside every controller route handler.
-- **Async Wrapper**: Wrap all asynchronous controller handler functions in a centralized wrapper utility to capture promise rejections and forward them automatically to `next(error)`:
+## 🚨 Bẫy Lỗi Bất Đồng Bộ (Async Error Handling Architecture)
+- **Không dùng try/catch thủ công tại Controller:** Việc viết try/catch ở mọi hàm trong tất cả các controller gây loãng mã nguồn.
+- **Sử dụng Wrapper Tự động:** Toàn bộ các hàm controller bất đồng bộ phải được bọc bằng một hàm tiện ích tự động bắt lỗi (như `asyncHandler`) để tự động chuyển tiếp tất cả các ngoại lệ phát sinh sang cấu phần `next()`.
 
   ```typescript
   import { Request, Response, NextFunction } from 'express';
 
-  // Automatically captures async rejections and forwards to the error handler
+  // Hàm Wrapper bắt lỗi bất đồng bộ tự động
   export const asyncHandler = (fn: Function) => (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 
-  // Controller usage example
+  // Cách triển khai thực tế tại Controller
   export const getUserProfile = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user.id;
-    const profile = await userService.getProfile(userId); // Unhandled errors here go to asyncHandler
+    const profile = await userService.getProfile(userId); // Nếu ném lỗi bên trong service, asyncHandler sẽ tự catch
     return res.status(200).json({ success: true, data: profile });
   });
   ```
 
 ---
 
-## 🔌 Global Error Handling Middleware
-- **Handler Registration**: Declare a unified global error handling middleware in `app.ts` or `server.ts` containing exactly 4 parameters (`err`, `req`, `res`, `next`). Place it at the very bottom of the middleware chain (after route declarations).
-- **Conventions**:
-  - Sanitize responses. Format output JSON uniformly:
+## 🔌 Middleware Xử Lý Lỗi Tập Trung (Global Error Handler)
+- **Khai báo bộ lọc:** Bắt buộc phải khai báo một middleware xử lý lỗi có đủ 4 tham số ở cuối tệp cấu hình server (sau khi khai báo tất cả các routes) để định dạng lại toàn bộ phản hồi lỗi trước khi trả về cho Client.
+
   ```typescript
+  // Trong file app.ts hoặc server.ts
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     const statusCode = err.statusCode || 500;
     const message = err.message || 'Internal Server Error';
@@ -46,9 +46,9 @@ This ruleset governs asynchronous error trapping, global exception response form
 
 ---
 
-## 🛡️ Input Validation Middleware (Zod)
-- **No manual conditional statements**: Forbid `if (!req.body.email)` or raw string checking scripts in controllers.
-- **Zod Middleware**: Implement a schema-driven validation middleware using Zod to parse and validate request payloads (`body`, `query`, `params`) before routing requests:
+## 🛡️ Kiểm Thử Dữ Liệu Tự Động Với Zod Middleware
+- **Cấm Validate thủ công bằng câu lệnh điều kiện:** Không viết các đoạn code `if (!req.body.email)`.
+- **Xây dựng Middleware Validate Schema:** Phát triển một middleware dùng chung nhận vào một Schema của Zod để tự động kiểm duyệt toàn bộ dữ liệu đầu vào (`body`, `query`, `params`) trước khi cho phép dữ liệu đi sâu vào tầng Controller.
 
   ```typescript
   import { AnyZodObject, ZodError } from 'zod';
@@ -57,13 +57,14 @@ This ruleset governs asynchronous error trapping, global exception response form
   export const validateSchema = (schema: AnyZodObject) => {
     return async (req: Request, res: Response, next: NextFunction): Promise<any> => {
       try {
+        // Xác thực đồng thời cả body, query, và params thông qua cấu trúc schema của Zod
         const parsed = await schema.parseAsync({
           body: req.body,
           query: req.query,
           params: req.params,
         });
         
-        // Assign cleaned and casted data back to the express request object
+        // Gán lại dữ liệu đã được parse sạch (và ép kiểu nếu có) vào hệ thống request
         req.body = parsed.body;
         req.query = parsed.query;
         req.params = parsed.params;
