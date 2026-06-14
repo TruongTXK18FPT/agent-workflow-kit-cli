@@ -24,7 +24,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 interface InitOptions {
-  stack: "auto" | "spring-boot" | "react-ts" | "next-js" | "nestjs" | "express" | "fastapi" | "python-ai" | "dotnet" | "golang" | "rust";
+  stack: "auto" | "spring-boot" | "react-ts" | "next-js" | "nestjs" | "express" | "fastapi" | "python-ai" | "dotnet" | "golang" | "rust" | "diagram" | "devops";
   agent: "both" | "codex" | "antigravity";
   dryRun: boolean;
 }
@@ -323,12 +323,12 @@ export async function runInit(options: InitOptions) {
       )
     );
 
-    const analysis = await analyzeModule(mod.dir, mod.stacks);
+    const analysis = await analyzeModule(mod.dir, mod.stacks as any);
 
     let stackContent = "";
     for (const stack of mod.stacks) {
       try {
-        const stackCtx = analysis[stack] || {};
+        const stackCtx = (analysis as any)[stack] || {};
         const rendered = await renderTemplate(`${stack}/AGENTS.md.hbs`, stackCtx);
         stackContent += rendered + "\n\n";
       } catch (err) {
@@ -414,7 +414,7 @@ export async function runInit(options: InitOptions) {
 
     // Copy rules and skills for each stack in this module
     for (const stack of mod.stacks) {
-      const stackCtx = analysis[stack] || {};
+      const stackCtx = (analysis as any)[stack] || {};
 
       // A. Rules
       const rules = await getStackRules(stack);

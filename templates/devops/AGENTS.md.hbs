@@ -1,0 +1,32 @@
+## 🚀 DevOps & Deployment Automation Guide
+
+### 🔄 DevOps Workflow
+When setting up CI/CD pipelines or containerizing applications, apply these core principles:
+1. **Analyze Project Runtime:** Identify the language ecosystem (Node.js, Python, Go, Rust, Java, .NET) and detect package manager/lockfiles (e.g. `package-lock.json`, `poetry.lock`, `Cargo.lock`, `go.sum`).
+2. **Implement Secure Multi-Stage Builds:** Separate build dependencies from runtime dependencies. The runtime image must be minimal (e.g., alpine, distroless) and must never run as `root`.
+3. **Establish CI/CD Pipelines:** Setup linting, automated testing, and secure Docker image publication workflows inside GitHub Actions.
+
+---
+
+### 🏗️ Available DevOps Templates
+Refer to the detailed rules below:
+- Scaffolding secure Dockerfiles and GitHub Actions workflows: `@devops`
+
+---
+
+### 🏛️ Strict Container & Pipeline Standards
+
+#### 1. Dockerfile Guidelines
+- **Multi-Stage Builds:** Always use a builder stage to download tools, compile source code, and install development headers, then copy only the compiled binaries/compiled assets to the final stage.
+- **Rootless Execution:** Declare a non-privileged user (e.g., `nobody`, `appuser`, `node`) using the `USER` directive in the final stage.
+- **Caching Optimization:** Copy dependency manifest files (like `package.json`, `go.mod`, `Cargo.toml`) and perform installation steps *before* copying the source code directory to maximize layer caching efficiency.
+- **Base Images:** Prefer minimal, stable base images (like `node:20-alpine`, `python:3.11-slim`, `gcr.io/distroless/static`).
+
+#### 2. GitHub Actions CI/CD Rules
+- **Security:** Use secrets (`secrets.GITHUB_TOKEN` or custom registry credentials) to authenticate with registries. Never hardcode credentials.
+- **Phases:** Ensure the pipeline follows a clear linear progression: `Lint` -> `Test` -> `Build Docker` -> `Publish Image` -> `Verify`.
+- **Environment:** Run tests inside appropriate isolation, specifying necessary environment variables as configuration variables.
+
+### 🧪 Verification
+- Validate the Dockerfile builds locally: `docker build -t app:local .`
+- Ensure GitHub Actions workflow schema checks out correctly using visual validators or linting tools.

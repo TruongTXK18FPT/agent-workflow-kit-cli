@@ -1,0 +1,30 @@
+## 📊 Diagram & System Architecture Design Guide
+
+### 🔄 Diagram Lifecycle & Modeling Process
+When creating system design assets or documenting architecture, follow this structured process:
+1. **Analyze Codebase Context:** Read the existing modules, packages, database schemas, and workflows to ensure the diagram reflects the physical system 100% accurately.
+2. **Choose the Right Diagram Type:** Align the visualization with the specific architectural need (e.g., Use Case for business scopes, Sequence for dynamic interactions, ERD for data models, Peter Chen for high-level conceptual mapping).
+3. **Monochrome Design System:** Enforce simple black and white styling (`fillColor=#ffffff;strokeColor=#000000;`). Do not use flashy colors or gradients unless explicitly requested by the user. Focus strictly on correct UML/structure notations.
+4. **Generate & Output Draw.io XML:** Construct the diagram structure using clean native Draw.io XML markup `<mxfile>...</mxfile>` with unique cell IDs and non-overlapping coordinate grids.
+
+---
+
+### 🏗️ Available Design Templates
+Refer to the detailed rules below:
+- Scaffolding native Draw.io XML diagrams with correct syntax: `@drawio-diagram`
+
+---
+
+### 🏛️ Diagram Standards & Syntax Constraints
+
+#### 1. Formatting & ID Integrity
+- **Unique IDs:** Every visual node (`mxCell`) must possess a unique, consistent ID. The base nodes must declare `id="0"` and `id="1" parent="0"`.
+- **Coordinate Spacing:** Calculate `x`, `y`, `width`, and `height` dimensions carefully to prevent node overlap. Ensure generous margins for readable text.
+
+#### 2. Structural Relationships
+- **Arrowheads & Connections:** Use exact UML arrow representations (e.g., Generalization `endArrow=block;endFill=0;`, Composition `endArrow=diamond;endFill=1;`, Crow's foot `endArrow=ERoneToMany;`).
+- **Separation of Concerns:** Keep distinct actors, microservices, databases, and third-party systems separated by boundaries or swimlanes in workflow layouts.
+
+### 🧪 Verification
+- Confirm that the generated XML tags match the schema of Draw.io.
+- Ensure the XML is raw and can be copy-pasted directly into the Draw.io UI (`File` -> `Import` or paste into the XML text editor panel) without formatting errors.
