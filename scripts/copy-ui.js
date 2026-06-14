@@ -35,6 +35,11 @@ async function main() {
   try {
     const sourceExists = await fs.access(SOURCE_DIR).then(() => true).catch(() => false);
     if (!sourceExists) {
+      const targetExists = await fs.access(TARGET_DIR).then(() => true).catch(() => false);
+      if (targetExists) {
+        console.log("⚠️ Source directory not found, but target ui-dist already exists. Skipping copy.");
+        process.exit(0);
+      }
       console.error(`\n❌ Error: Source directory not found: ${SOURCE_DIR}`);
       console.error("👉 Please build the Vite project first: run 'npm run build' inside '../agent-workflow-kit'\n");
       process.exit(1);
