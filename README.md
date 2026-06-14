@@ -162,21 +162,78 @@ packages = ["src"]
 
 ---
 
+### 🌐 Next.js Frontend Pack
+Tailored for Next.js App or Pages Router web application structures.
+- **Default Architecture:** Standard layouts, page component separations, and shared Tailwind/styling assets.
+- **Tooling Defaults:** Next CLI tools, ESLint, strict TypeScript rules.
+
+---
+
+### 🛡️ NestJS & Express Backend Packs
+Designed for structured modular Node.js backend systems.
+- **Default Architecture:** Dependency injection modular patterns (NestJS) or routing/middleware setups (Express).
+- **Tooling Defaults:** ESLint, Prettier, and Vitest/Jest for automated testing.
+
+---
+
+### 🤖 Python AI Pack
+Custom-tailored rules and structures for AI modeling, machine learning, and data science.
+- **Default Architecture:** Machine learning pipelines, model loaders, script helpers, and notebook guides.
+- **Tooling Defaults:** Ruff linting, mypy strict type checking, and standard AI environment libraries.
+
+---
+
+### ⚙️ .NET Core C# Pack
+Designed for enterprise-level applications written in C# on .NET Core.
+- **Default Architecture:** Clean-architecture layers (controllers, application services, domain interfaces, and infrastructure/data layers).
+- **Tooling Defaults:** C# styling guides, standard `dotnet test` suites.
+
+---
+
+### 🐹 Go Pack
+High-performance Go backend structures.
+- **Default Architecture:** Go standard layout structures, clear service boundary interfaces, and separation of concerns.
+- **Tooling Defaults:** `go fmt`, `go vet`, and standard go test execution.
+
+---
+
+### 🦀 Rust Pack
+Memory-safe, high-performance systems and backend libraries in Rust.
+- **Default Architecture:** Workspace modules, cargo configurations, and library/binary structures.
+- **Tooling Defaults:** `cargo clippy`, `cargo fmt`, and standard Rust test suites.
+
+---
+
+### 📦 DevOps Stack Pack
+Standardizes container, pipeline, and automation configurations.
+- **Default Architecture:** Multi-stage Dockerfiles, Docker Compose environment setups, and CI/CD pipelines (GitHub Actions, GitLab CI).
+
+---
+
+### 📊 Diagram Pack
+Organizes system designs and architectures using standard diagrams.
+- **Default Architecture:** Standard guidelines for UML, Mermaid blocks, and PlantUML designs.
+
+---
+
 ## 🚀 Quick Start
 
 Initialize the toolkit instantly inside your project repository using `npx` (no local installation required):
 
 ```bash
-# 1. Initialize rules and custom skills for the project
+# 1. Launch the local configuration wizard web dashboard (Optional)
+npx agent-workflow-kit-cli ui
+
+# 2. Or initialize rules and custom skills directly via CLI
 npx agent-workflow-kit-cli init
 
-# 2. View the generated AGENTS.md guidelines at your repository root
+# 3. View the generated AGENTS.md guidelines at your repository root
 cat AGENTS.md
 
-# 3. Export custom skills to register them with Antigravity
+# 4. Export custom skills to register them with Antigravity
 npx agent-workflow-kit-cli export antigravity
 
-# 4. Enable pre-commit auto-validation hook
+# 5. Enable pre-commit auto-validation hook
 npx agent-workflow-kit-cli doctor --install-hook
 ```
 
@@ -191,12 +248,12 @@ npx agent-workflow-kit-cli <command> [options]
 ```
 
 ### 1. `init`
-Analyzes the directory manifests (`package.json`, `pom.xml`, `pyproject.toml`) and bootstraps agent guidelines (`AGENTS.md`) and custom skills (`.agents/`).
+Analyzes the directory manifests (`package.json`, `pom.xml`, `pyproject.toml`, etc.) and bootstraps agent guidelines (`AGENTS.md`) and custom skills (`.agents/`).
 
 * **Usage:** `npx agent-workflow-kit-cli init [options]`
 * **Options:**
   * `--stack <stack>`: Specify the target project stack.
-    * Values: `auto`, `spring-boot`, `react-ts`, `fastapi`
+    * Values: `auto`, `spring-boot`, `react-ts`, `next-js`, `nestjs`, `express`, `fastapi`, `python-ai`, `dotnet`, `golang`, `rust`, `devops`, `diagram`
     * Default: `auto` (auto-detects project manifests)
   * `--agent <agent>`: Target profile settings.
     * Values: `both`, `codex`, `antigravity`
@@ -205,7 +262,30 @@ Analyzes the directory manifests (`package.json`, `pom.xml`, `pyproject.toml`) a
 
 ---
 
-### 2. `sync`
+### 2. `ui`
+Launches the local configuration wizard web dashboard in your browser.
+
+* **Usage:** `npx agent-workflow-kit-cli ui [options]`
+* **Options:**
+  * `-p, --port <port>`: Port to run the UI server on.
+    * Default: `4321`
+
+---
+
+### 3. `add <stack>`
+Manually installs a specific stack pack guidelines and templates to a folder.
+
+* **Usage:** `npx agent-workflow-kit-cli add <stack> [options]`
+* **Arguments:**
+  * `<stack>`: The stack pack name (e.g. `spring-boot`, `react-ts`, `rust`, etc.).
+* **Options:**
+  * `--path <path>`: Target folder path to install the guidelines (default: `.`).
+  * `--agent <agent>`: Specify target agent profile: `both | codex | antigravity` (default: `both`).
+  * `--dry-run`: Simulation mode. Logs actions without writing files to disk.
+
+---
+
+### 4. `sync`
 Re-evaluates the manifests and updates existing guidelines/skills inside the workspace without touching user modifications. It writes changes inside the `<!-- AWK-START: <id> -->` managed blocks.
 
 * **Usage:** `npx agent-workflow-kit-cli sync [options]`
@@ -214,7 +294,7 @@ Re-evaluates the manifests and updates existing guidelines/skills inside the wor
 
 ---
 
-### 3. `doctor`
+### 5. `doctor`
 Checks consistency of active agent configurations, environment setups, and executes the validation test commands configured for detected stacks.
 
 * **Usage:** `npx agent-workflow-kit-cli doctor [options]`
@@ -223,7 +303,7 @@ Checks consistency of active agent configurations, environment setups, and execu
 
 ---
 
-### 4. `export <target>`
+### 6. `export <target>`
 Exports and bundles custom workflows and skills in `.agents/skills/` into a single consolidated string optimized for the target AI agent console.
 
 * **Usage:** `npx agent-workflow-kit-cli export <target> [options]`
@@ -231,6 +311,75 @@ Exports and bundles custom workflows and skills in `.agents/skills/` into a sing
   * `<target>`: The name of the target agent (e.g., `antigravity`).
 * **Options:**
   * `--no-clipboard`: Prevents the CLI from copying the bundled instructions directly to the system clipboard (by default, it will attempt to copy to the clipboard first, fallback to printing on stdout).
+  * `-o, --output <file>`: Write the exported guidelines to a specific file.
+
+---
+
+### 7. `run <workflow>`
+Runs an AWOS graph workflow directly from the command line.
+
+* **Usage:** `npx agent-workflow-kit-cli run <workflow> [options]`
+* **Arguments:**
+  * `<workflow>`: Path to the workflow JSON configuration.
+* **Options:**
+  * `--inputs <inputs>`: Path to input parameters JSON file or inline JSON string.
+  * `--dry-run`: Run workflow nodes in dry-run simulation mode.
+
+---
+
+### 8. `resume <runId>`
+Resumes a suspended or paused AWOS workflow run.
+
+* **Usage:** `npx agent-workflow-kit-cli resume <runId>`
+* **Arguments:**
+  * `<runId>`: The ID of the suspended workflow run.
+
+---
+
+### 9. `profile`
+Validates directory architecture structure and rule boundaries using custom structural rules.
+
+* **Usage:** `npx agent-workflow-kit-cli profile [options]`
+* **Options:**
+  * `--profile <profile>`: Target profile name (e.g. `clean-architecture`).
+
+---
+
+### 10. `workflow` (Subcommands)
+Manage and execute registered AWOS workflow packs.
+
+* **Subcommands:**
+  * `list`: List all discovered/registered workflow packs.
+  * `show <id>`: Show details, steps, and metadata of a workflow pack.
+  * `validate <id>`: Validate a workflow pack's JSON schema and graph cycle constraints.
+  * `run <id> [options]`: Execute a registered workflow pack by ID (options: `--inputs`, `--dry-run`).
+
+---
+
+### 11. `role` (Subcommands)
+Manage agent role profiles.
+
+* **Subcommands:**
+  * `list`: List all discovered agent role profiles in the catalog.
+  * `show <id>`: Show agent role details, checkpoints, and inputs schema.
+  * `validate`: Validate all role catalog configuration files against schema parameters.
+
+---
+
+### 12. `adr` (Subcommands)
+Manage Architectural Decision Records (ADR).
+
+* **Subcommands:**
+  * `create [options]`: Create a new numbered ADR document. Options:
+    * `--title <title>`: ADR title.
+    * `--status <status>`: Status: `proposed | accepted | rejected | superseded` (default: `proposed`).
+    * `--context <context>`: Background context.
+    * `--decision <decision>`: Decision details.
+    * `--consequences <consequences>`: Repercussions/consequences.
+    * `--decision-maker <maker>`: Name/role of decision maker (default: `AWOS System`).
+  * `list`: List all saved ADR documents.
+  * `show <id>`: Display details of a numbered ADR document.
+  * `search <keyword>`: Search all ADR documents for keyword text matches.
 
 ---
 
