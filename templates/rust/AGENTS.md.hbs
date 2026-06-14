@@ -1,14 +1,12 @@
 ## 🗺️ Rust Development Guide
 
 ### 🔄 Agent Development Lifecycle
-The AI Agent must execute all Rust tasks following this 4-step workflow:
-1. **Design & Implementation:** Implement business logic adhering to Rust conventions. Enforce structural separation: `main.rs` (for binary application setup) and `lib.rs` (for core business logic that can be reused and tested).
-2. **Comprehensive Testing:** Write unit tests inside internal test modules and integration tests in the `/tests` directory. Run tests with: `cargo test`.
-3. **Code Quality & Linting:** Run check tools regularly to ensure a warning-free state:
-   - Formatting: `cargo fmt`
-   - Linting: `cargo clippy --all-targets -- -D warnings`
-   - Build Validation: `cargo build`
-4. **Dependency Management:** Add external libraries using `cargo add [library_name]`. Never manually edit the `Cargo.lock` file.
+The AI Agent must execute all Rust tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Implement business logic adhering to Rust conventions. Enforce structural separation: `main.rs` (for binary application setup) and `lib.rs` (for core business logic that can be reused and tested).
+2. **Comprehensive Testing:** Write unit tests inside internal test modules and integration tests in the `/tests` directory. Mocks and double components should be declared under `#[cfg(test)]`.
+3. **Troubleshooting & Debugging:** When debugging lifetimes, memory borrow errors, or asynchronous deadlocks, refer to `@memory-concurrency.md` directives.
+4. **Code Quality & Review:** Verify code conforms strictly to `@rust-style.md` check criteria (preventing warnings, formatting code, avoiding over-cloning).
+5. **Crate Architecture:** Organize workspace dependencies using Cargo Workspaces if building multi-crate projects, maintaining encapsulation guidelines in `@project-layout.md`.
 
 ---
 
@@ -18,6 +16,8 @@ Refer to the detailed rules below:
 - Crate modules, Cargo Workspaces, and Trait-based Dependency Injection: `@project-layout.md`
 - Failures management, Result/Option, `thiserror`, and `anyhow`: `@error-handling.md`
 - Lifetimes `'a`, Smart Pointers, and async Tokio safety: `@memory-concurrency.md`
+- Scaffolding a Rust feature (Struct, traits, implementations, unit tests): `@rust-feature`
+- Scaffolding asynchronous database repositories and models: `@rust-db`
 
 ---
 
@@ -28,7 +28,14 @@ Refer to the detailed rules below:
 - **Exclusive Mutable Borrow:** Ensure only one mutable reference `&mut T` exists at a time, and never let it coexist with any read references `&T` in the same scope.
 
 #### 2. Safe Error Handling
-- **No Unwraps:** Never use `.unwrap()` or `.expect()` in production code (except in tests). Propagate errors using `Result<T, E>` or `Option<T>` to ensure system reliability.
+- **No Unwraps:** Never use `.unwrap()` or `.expect()` in production code (except in tests). Propagate errors using `Result<T, E>` or `Option<T>` to ensure system reliability. Manage library errors with `thiserror` and application errors with `anyhow` as outlined in `@error-handling.md`.
 
 #### 3. Async Concurrency (Tokio)
 - **CPU-Bound Tasks:** Never run heavy CPU operations (e.g., encryption, intensive loops) directly inside async contexts. Offload them using `tokio::task::spawn_blocking`.
+- **Mutex Selection:** Prefer standard `std::sync::Mutex` for synchronizing state across threads if the guard is not held across `.await` points. Use `tokio::sync::Mutex` only when needed to prevent scheduling blocking.
+
+### 🧪 Verification & Testing
+Before completing a task, run the following verification pipeline locally:
+- **Lint check:** `cargo clippy --all-targets -- -D warnings`
+- **Testing:** `cargo test`
+- **Formatting:** `cargo fmt -- --check`

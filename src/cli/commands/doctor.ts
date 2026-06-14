@@ -7,7 +7,7 @@ import chalk from "chalk";
 import { promises as fs } from "fs";
 import path from "path";
 import { execa } from "execa";
-import { detectProjectStack } from "../../core/detector.js";
+import { detectProjectModules } from "../../core/detector.js";
 
 interface DoctorOptions {
   installHook: boolean;
@@ -67,62 +67,153 @@ npx agent-workflow-kit-cli doctor || exit 1
 
   console.log(chalk.blue("Running doctor checks on repository..."));
   
-  // 1. Detect Stack
-  const stacks = await detectProjectStack(cwd);
-  console.log(chalk.gray(`Detected stacks: ${stacks.join(", ") || "None"}`));
-
-  if (stacks.length === 0) {
-    console.log(chalk.yellow("No standard stack pack detected. Nothing to validate."));
+  // 1. Detect Modules
+  const modules = await detectProjectModules(cwd);
+  
+  if (modules.length === 0) {
+    console.log(chalk.yellow("No standard project modules detected. Nothing to validate."));
     return;
   }
+
+  console.log(chalk.gray(`Detected modules: ${modules.map(m => `${m.name} [${m.stacks.join(", ")}]`).join(", ")}`));
 
   // 2. Validate
   let passed = true;
 
-  for (const stack of stacks) {
-    console.log(chalk.blue(`\nValidating stack: ${stack}...`));
-    
-    try {
-      if (stack === "spring-boot") {
-        console.log(chalk.gray("Running: ./mvnw clean compile"));
-        await execa("./mvnw", ["clean", "compile"], { cwd, stdio: "inherit" });
-      } else if (stack === "fastapi") {
-        console.log(chalk.gray("Running: ruff check ."));
-        await execa("ruff", ["check", "."], { cwd, stdio: "inherit" });
-      } else if (stack === "python-ai") {
-        let cmd = "ruff";
-        let args = ["check", "."];
-        try {
-          const hasPoetry = await fs.stat(path.join(cwd, "poetry.lock")).then(s => s.isFile()).catch(() => false);
-          if (hasPoetry) {
-            cmd = "poetry";
-            args = ["run", "python", "-m", "ruff", "check", "."];
-          } else {
-            const hasPipenv = await fs.stat(path.join(cwd, "Pipfile")).then(s => s.isFile()).catch(() => false);
-            if (hasPipenv) {
-              cmd = "pipenv";
-              args = ["run", "python", "-m", "ruff", "check", "."];
+  for (const mod of modules) {
+    console.log(chalk.blue(`\nValidating module: ${mod.name === "." ? "root" : mod.name}...`));
+    for (const stack of mod.stacks) {
+      console.log(chalk.cyan(`  Validating stack: ${stack}...`));
+      
+      try {
+        if (stack === "spring-boot") {
+          // Check for maven wrapper or gradle wrapper
+          const hasGradle =
+            (await fs.stat(path.join(mod.dir, "build.gradle")).then((s) => s.isFile()).catch(() => false)) ||
+            (await fs.stat(path.join(mod.dir, "build.gradle.kts")).then((s) => s.isFile()).catch(() => false));
+          
+          if (hasGradle) {
+            let gradlewPath = "./gradlew";
+            try {
+              await fs.access(path.join(mod.dir, "gradlew"));
+            } catch {
+              try {
+                await fs.access(path.join(cwd, "gradlew"));
+                gradlewPath = path.relative(mod.dir, path.join(cwd, "gradlew")).replace(/\\/g, "/");
+                if (!gradlewPath.startsWith(".")) gradlewPath = "./" + gradlewPath;
+              } catch {
+                gradlewPath = "gradle";
+              }
             }
+            console.log(chalk.gray(`Running: ${gradlewPath} check in ${mod.dir}`));
+            await execa(gradlewPath, ["check"], { cwd: mod.dir, stdio: "inherit" });
+          } else {
+            let mvnwPath = "./mvnw";
+            try {
+              await fs.access(path.join(mod.dir, "mvnw"));
+            } catch {
+              try {
+                await fs.access(path.join(cwd, "mvnw"));
+                mvnwPath = path.relative(mod.dir, path.join(cwd, "mvnw")).replace(/\\/g, "/");
+                if (!mvnwPath.startsWith(".")) mvnwPath = "./" + mvnwPath;
+              } catch {
+                mvnwPath = "mvn";
+              }
+            }
+            console.log(chalk.gray(`Running: ${mvnwPath} clean compile in ${mod.dir}`));
+            await execa(mvnwPath, ["clean", "compile"], { cwd: mod.dir, stdio: "inherit" });
           }
-        } catch {}
-        console.log(chalk.gray(`Running: ${cmd} ${args.join(" ")}`));
-        await execa(cmd, args, { cwd, stdio: "inherit" });
-      } else if (
-        stack === "react-ts" ||
-        stack === "next-js" ||
-        stack === "nestjs" ||
-        stack === "express"
-      ) {
-        console.log(chalk.gray("Running: npx tsc --noEmit"));
-        await execa("npx", ["tsc", "--noEmit"], { cwd, stdio: "inherit" });
-      } else if (stack === "dotnet") {
-        console.log(chalk.gray("Running: dotnet build"));
-        await execa("dotnet", ["build"], { cwd, stdio: "inherit" });
+        } else if (stack === "fastapi") {
+          console.log(chalk.gray(`Running: ruff check . in ${mod.dir}`));
+          await execa("ruff", ["check", "."], { cwd: mod.dir, stdio: "inherit" });
+        } else if (stack === "python-ai") {
+          let cmd = "ruff";
+          let args = ["check", "."];
+          try {
+            const hasPoetry = await fs.stat(path.join(mod.dir, "poetry.lock")).then(s => s.isFile()).catch(() => false);
+            if (hasPoetry) {
+              cmd = "poetry";
+              args = ["run", "ruff", "check", "."];
+            } else {
+              const hasPipenv = await fs.stat(path.join(mod.dir, "Pipfile")).then(s => s.isFile()).catch(() => false);
+              if (hasPipenv) {
+                cmd = "pipenv";
+                args = ["run", "ruff", "check", "."];
+              }
+            }
+          } catch {}
+          console.log(chalk.gray(`Running: ${cmd} ${args.join(" ")} in ${mod.dir}`));
+          await execa(cmd, args, { cwd: mod.dir, stdio: "inherit" });
+        } else if (
+          stack === "react-ts" ||
+          stack === "next-js" ||
+          stack === "nestjs" ||
+          stack === "express"
+        ) {
+          let pm: "npm" | "pnpm" | "yarn" | "bun" = "npm";
+          try {
+            const hasYarnLock = await fs.stat(path.join(mod.dir, "yarn.lock")).then((s) => s.isFile()).catch(() => false);
+            const hasPnpmLock = await fs.stat(path.join(mod.dir, "pnpm-lock.yaml")).then((s) => s.isFile()).catch(() => false);
+            const hasBunLockb = await fs.stat(path.join(mod.dir, "bun.lockb")).then((s) => s.isFile()).catch(() => false);
+            const hasBunLock = await fs.stat(path.join(mod.dir, "bun.lock")).then((s) => s.isFile()).catch(() => false);
+            if (hasYarnLock) pm = "yarn";
+            else if (hasPnpmLock) pm = "pnpm";
+            else if (hasBunLockb || hasBunLock) pm = "bun";
+          } catch {}
+
+          try {
+            const pkgContent = await fs.readFile(path.join(mod.dir, "package.json"), "utf8");
+            const pkg = JSON.parse(pkgContent);
+            const scripts = pkg.scripts || {};
+            
+            if (scripts.lint) {
+              console.log(chalk.gray(`Running: ${pm} run lint in ${mod.dir}`));
+              await execa(pm, ["run", "lint"], { cwd: mod.dir, stdio: "inherit" });
+            }
+            
+            console.log(chalk.gray(`Running: npx tsc --noEmit in ${mod.dir}`));
+            await execa("npx", ["tsc", "--noEmit"], { cwd: mod.dir, stdio: "inherit" });
+
+            if (scripts.test) {
+              const hasVitest = pkg.dependencies?.vitest || pkg.devDependencies?.vitest;
+              const hasJest = pkg.dependencies?.jest || pkg.devDependencies?.jest;
+              
+              let args = ["run", "test"];
+              if (hasVitest || hasJest) {
+                if (pm === "npm") {
+                  args = ["run", "test", "--", "--run"];
+                } else {
+                  args = ["run", "test", "--run"];
+                }
+              }
+              console.log(chalk.gray(`Running: ${pm} ${args.join(" ")} in ${mod.dir}`));
+              await execa(pm, args, { cwd: mod.dir, stdio: "inherit", env: { ...process.env, CI: "true" } });
+            }
+          } catch {
+            console.log(chalk.gray(`Running: npx tsc --noEmit in ${mod.dir}`));
+            await execa("npx", ["tsc", "--noEmit"], { cwd: mod.dir, stdio: "inherit" });
+          }
+        } else if (stack === "dotnet") {
+          console.log(chalk.gray(`Running: dotnet build in ${mod.dir}`));
+          await execa("dotnet", ["build"], { cwd: mod.dir, stdio: "inherit" });
+          console.log(chalk.gray(`Running: dotnet test in ${mod.dir}`));
+          await execa("dotnet", ["test"], { cwd: mod.dir, stdio: "inherit" });
+        } else if (stack === "golang") {
+          console.log(chalk.gray(`Running: go build ./... in ${mod.dir}`));
+          await execa("go", ["build", "./..."], { cwd: mod.dir, stdio: "inherit" });
+          console.log(chalk.gray(`Running: go test ./... in ${mod.dir}`));
+          await execa("go", ["test", "./..."], { cwd: mod.dir, stdio: "inherit" });
+        } else if (stack === "rust") {
+          console.log(chalk.gray(`Running: cargo check in ${mod.dir}`));
+          await execa("cargo", ["check"], { cwd: mod.dir, stdio: "inherit" });
+          console.log(chalk.gray(`Running: cargo test in ${mod.dir}`));
+          await execa("cargo", ["test"], { cwd: mod.dir, stdio: "inherit" });
+        }
+        console.log(chalk.green(`  ✔️ ${stack} validation passed!`));
+      } catch (err) {
+        console.error(chalk.red(`  ❌ ${stack} validation failed: ${err instanceof Error ? err.message : String(err)}`));
+        passed = false;
       }
-      console.log(chalk.green(`✔️ ${stack} validation passed!`));
-    } catch (err) {
-      console.error(chalk.red(`❌ ${stack} validation failed: ${err instanceof Error ? err.message : String(err)}`));
-      passed = false;
     }
   }
 

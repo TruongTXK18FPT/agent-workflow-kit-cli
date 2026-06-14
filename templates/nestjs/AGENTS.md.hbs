@@ -1,15 +1,12 @@
 ## 🗺️ NestJS Development Guide (Node.js Backend)
 
 ### 🔄 Agent Development Lifecycle
-The AI Agent must execute all NestJS tasks following this 5-step workflow:
-1. **Design & Implementation:** Implement business logic adhering to the Module-driven architecture. Keep Controllers thin; place 100% of business logic within Services.
+The AI Agent must execute all NestJS tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Implement business logic adhering to the Module-driven architecture. Keep Controllers thin; place 100% of business logic within Services. Encapsulate components cleanly as outlined in `@module-architecture.md`.
 2. **Comprehensive Testing:** Write unit tests for Services using Jest Mocking (`.spec.ts`) and end-to-end (E2E) integration tests using Supertest.
-3. **Code Quality & Type Safety:** Run syntax check and type check commands:
-   - Linting: `{{runCommand}} lint`
-   - Type Checking: `{{runCommand}} typecheck`
-   - Testing: `{{runCommand}} test` (or `{{runCommand}} test -- --run` for CI/CD environments)
-   - Build Validation: `{{runCommand}} build`
-4. **Dependency Management:** Install new libraries using `{{packageManager}} add [library_name]`. Never modify the lockfile `{{lockFile}}` manually.
+3. **Troubleshooting & Debugging:** When debugging request validations or database mappings, inspect class-validator metadata and database query logs.
+4. **Code Quality & Review:** Perform self-review using `@validation-errors.md` to ensure constraints are enforced and exceptions are mapped correctly. Check formatting conventions in `@nestjs-style.md`.
+5. **Production Readiness:** Verify compilation and lint errors are resolved before completion.
 
 ---
 
@@ -18,7 +15,7 @@ Refer to the detailed rules below:
 - TypeScript coding style, indentation, decorator sorting, and clean code conventions: `@nestjs-style.md`
 - Strict module boundaries, encapsulation, and resource sharing rules: `@module-architecture.md`
 - Class Validator setups, ValidationPipe data transformations, and Exception Filters: `@validation-errors.md`
-- Process to scaffold modular components (Module, Controller, Service, DTO, Entity): `@SKILL.md`
+- Process to scaffold modular components (Module, Controller, Service, DTO, Entity): `@nestjs-module`
 
 ---
 
@@ -36,3 +33,10 @@ Refer to the detailed rules below:
 - **No Raw Server Errors:** Never expose raw database or system exceptions (HTTP 500) to clients.
 - **Built-in HttpExceptions:** Handle try/catch flows inside Services and map errors to explicit NestJS HttpExceptions (e.g., `NotFoundException`, `BadRequestException`, `ForbiddenException`).
 - **Global Exception Filter:** Expose a global Exception Filter to format all error responses consistently in JSON format.
+
+### 🧪 Verification & Testing
+Before completing a task, run the following verification pipeline:
+- **Linting:** `{{runCommand}} lint`
+- **Type Checking:** `{{runCommand}} typecheck`
+- **Testing:** `{{runCommand}} test`
+- **Build Validation:** `{{runCommand}} build`

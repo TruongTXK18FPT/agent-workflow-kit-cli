@@ -1,11 +1,19 @@
 ## 🐍 Python FastAPI Guidelines
 
+### 🔄 End-to-End Agent Development Lifecycle
+AI Agents must execute all Python FastAPI tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Implement layers following the structure guidelines below. Keep routes thin and business logic inside Services/CRUD.
+2. **Comprehensive Testing:** Write API test cases using pytest and `httpx.AsyncClient`. Mock all external dependencies. Review the testing guidelines in `@api-testing.md`.
+3. **Troubleshooting & Debugging:** When debugging database or connection errors, follow async context managers and mock session structures.
+4. **Code Quality & Review:** Perform self-review using `@python-style.md` to check type hinting, Pydantic validations, and parameter annotations.
+5. **Database Integrity:** Ensure all structural changes have matching Alembic migrations. Conform to async session guidelines in `@database-async.md`.
+
 ### 🏗️ Architecture & Router-Service-Repository Conventions
-Follow a clean layering architecture. Separate HTTP routing, business logic, and database operations:
+Follow a feature-first or modular layered architecture. Separate HTTP routing, business logic, and database operations:
 
 ```text
 app/
-  core/           # Config, database setup
+  core/           # Config, database setup, exceptions
   models/         # SQLAlchemy or SQLModel entities
   schemas/        # Pydantic validation models
   crud/           # Database repositories/CRUD operations
@@ -16,9 +24,23 @@ app/
 ```
 
 ### ⚙️ Coding Guidelines
-- **Dependency Injection:** Use FastAPI's `Depends` explicitly for injecting database sessions, security credentials, and custom services.
+- **Dependency Injection:** Use FastAPI's `Depends` explicitly for injecting database sessions, security credentials, and custom services. Avoid manual imports of DB connections.
 - **Strict Typing:** Always annotate function arguments and return types. Use Pydantic's `response_model` or type hints to enforce validation.
 - **Asynchronous Handlers:** Prefer `async def` for I/O bound endpoints.
+
+### 🏛️ Strict Development Rules
+
+#### 1. Input/Output Validation with Pydantic
+- Validate all incoming request payloads using Pydantic models.
+- Design distinct schemas for read, create, and update actions (e.g. `UserRead`, `UserCreate`, `UserUpdate`) to prevent exposing sensitive fields or auto-incrementing ID fields.
+
+#### 2. Async Database Session Lifecycle
+- Always use `AsyncSession` from `sqlalchemy.ext.asyncio` for operations.
+- Bind the database session lifetime using dependency yield. Review the rules in `@database-async.md`.
+
+#### 3. Error Handling
+- Never throw raw python exceptions directly from routers.
+- Map business logic errors (e.g., entity not found, duplicate emails) to FastAPI's built-in `HTTPException` class with specific status codes (e.g., `404 Not Found`, `400 Bad Request`).
 
 ### 🧪 Testing & Verification
 Before completing a task, run the following verification pipeline locally:

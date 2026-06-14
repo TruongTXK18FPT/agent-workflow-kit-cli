@@ -1,15 +1,12 @@
 ## 🗺️ Next.js Development Guide (App Router)
 
 ### 🔄 Agent Development Lifecycle
-The AI Agent must execute all Next.js tasks following this 5-step workflow:
-1. **Design & Implementation:** Build pages and components adhering to the App Router conventions. Default to React Server Components (RSC).
+The AI Agent must execute all Next.js tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Build pages and components adhering to the App Router conventions. Default to React Server Components (RSC) as described in `@server-client-components.md`.
 2. **Comprehensive Testing:** Write unit tests for business utilities and component behavior using Jest/Vitest.
-3. **Code Quality & Type Safety:** Run syntax check and type check commands:
-   - Linting: `{{runCommand}} lint`
-   - Type Checking: `{{runCommand}} typecheck`
-   - Testing: `{{runCommand}} test` (or `{{runCommand}} test -- --run` for CI/CD environments)
-   - Build Validation: `{{runCommand}} build`
-4. **Dependency Management:** Install new libraries using `{{packageManager}} add [library_name]`. Never modify the lockfile `{{lockFile}}` manually.
+3. **Troubleshooting & Debugging:** When debugging data loading or hydration mismatch issues, isolate Server and Client component scopes.
+4. **Code Quality & Review:** Perform self-review using `@data-fetching-mutations.md` (for Server Actions and query caching parameters) and `@seo-metadata.md`. Check styling rules in `@next-style.md`.
+5. **Production Readiness:** Verify compilation, type checks, and next builds compile warning-free before committing.
 
 ---
 
@@ -19,7 +16,7 @@ Refer to the detailed rules below:
 - Architectural boundaries between React Server Components (RSC) and React Client Components (RCC): `@server-client-components.md`
 - Server-side data fetching, caching, revalidation, and secure Server Actions: `@data-fetching-mutations.md`
 - Semantic HTML5 standards and Dynamic Metadata API configurations: `@seo-metadata.md`
-- Step-by-step process to generate new Pages or Routes cleanly: `@SKILL.md`
+- Step-by-step process to generate new Pages or Routes cleanly: `@next-feature`
 
 ---
 
@@ -39,3 +36,10 @@ Refer to the detailed rules below:
 - **Image Optimization:** Never use raw `<img>` tags. Use `next/image`'s `<Image />` with appropriate `sizes` attributes, and set `priority` for above-the-fold images.
 - **Navigation:** Use `<Link />` from `next/link` to enable background pre-fetching when links enter the viewport.
 - **Dynamic Metadata:** Export a `generateMetadata` function in dynamic routes to optimize search engine crawling.
+
+### 🧪 Verification & Testing
+Before completing a task, run the following verification pipeline:
+- **Linting:** `{{runCommand}} lint`
+- **Type Checking:** `{{runCommand}} typecheck`
+- **Testing:** `{{runCommand}} test`
+- **Build Validation:** `{{runCommand}} build`

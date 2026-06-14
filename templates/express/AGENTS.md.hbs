@@ -1,15 +1,12 @@
 ## 🗺️ Express.js Development Guide (Node.js Backend)
 
 ### 🔄 Agent Development Lifecycle
-The AI Agent must execute all Express.js tasks following this 5-step workflow:
-1. **Design & Implementation:** Organize code according to a clean 3-tier architecture. Spaghetti code is strictly prohibited.
+The AI Agent must execute all Express.js tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Organize code according to a clean 3-tier architecture as detailed in `@router-controller.md`. Spaghetti code is strictly prohibited.
 2. **Comprehensive Testing:** Write unit tests for Services using Jest, and test API integrations using Supertest.
-3. **Code Quality & Type Safety:** Run syntax check and type check commands:
-   - Linting: `{{runCommand}} lint`
-   - Type Checking: `{{runCommand}} typecheck`
-   - Testing: `{{runCommand}} test` (or `{{runCommand}} test -- --run` for CI/CD environments)
-   - Build Validation: `{{runCommand}} build`
-4. **Dependency Management:** Install new libraries using `{{packageManager}} add [library_name]`. Never modify the lockfile `{{lockFile}}` manually.
+3. **Troubleshooting & Debugging:** When debugging async router handlers or validation payloads, verify error forwarding is properly configured.
+4. **Code Quality & Review:** Perform self-review using `@error-handling.md` to ensure errors are captured globally and validation uses Zod schemas. Check style rules in `@express-style.md`.
+5. **Production Readiness:** Verify compilation and static analysis checks pass without errors.
 
 ---
 
@@ -18,7 +15,7 @@ Refer to the detailed rules below:
 - Clean coding style and type safety using TypeScript in Express: `@express-style.md`
 - Separation of concerns: Router mappings $\rightarrow$ Controller delegation $\rightarrow$ Service execution: `@router-controller.md`
 - Async error catching strategies and centralized global error handling middleware: `@error-handling.md`
-- Process to scaffold new API endpoints cleanly from Routers to Validators: `@SKILL.md`
+- Process to scaffold new API endpoints cleanly from Routers to Validators: `@express-endpoint`
 
 ---
 
@@ -39,3 +36,10 @@ $$\text{Client} \longrightarrow \text{Router} \longrightarrow \text{Middleware} 
 #### 3. Request Validation with Zod Middleware
 - **No Manual Conditional Validation:** Do not write scattered `if` blocks to check input parameters.
 - **Zod Schema Middleware:** Implement a shared validation middleware that accepts a Zod schema to validate request segments (`body`, `query`, `params`) before they reach the Controller.
+
+### 🧪 Verification & Testing
+Before completing a task, run the following verification pipeline:
+- **Linting:** `{{runCommand}} lint`
+- **Type Checking:** `{{runCommand}} typecheck`
+- **Testing:** `{{runCommand}} test`
+- **Build Validation:** `{{runCommand}} build`

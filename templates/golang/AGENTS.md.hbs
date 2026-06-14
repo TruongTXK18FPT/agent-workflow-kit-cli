@@ -1,14 +1,12 @@
 ## 🗺️ Golang Development Guide (Go Backend)
 
 ### 🔄 Agent Development Lifecycle
-The AI Agent must execute all Golang tasks following this 4-step workflow:
-1. **Design & Implementation:** Implement business logic adhering to the Standard Go Project Layout. Keep entrypoints in `cmd/`, core business logic in `internal/`, and standalone shared libraries in `pkg/`.
-2. **Comprehensive Testing:** Write unit tests using the table-driven testing pattern and Go's built-in `testing` library. Run tests with: `go test ./...`.
-3. **Code Quality & Formatting:** Ensure code compiles and meets formatting/linting rules:
-   - Formatting: `gofmt -w .`
-   - Linting: `golangci-lint run`
-   - Build Validation: `go build ./...`
-4. **Dependency Management:** Add new external libraries using `go get [library_name]`. Never manually edit the `go.sum` file.
+The AI Agent must execute all Golang tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Implement business logic adhering to the Standard Go Project Layout. Keep entrypoints in `cmd/`, core business logic in `internal/`, and standalone shared libraries in `pkg/`.
+2. **Comprehensive Testing:** Write unit tests using the table-driven testing pattern and Go's built-in `testing` library. Mock database layers or third-party connections.
+3. **Troubleshooting & Debugging:** When debugging goroutines or database locks, use context cancellation and trace log output.
+4. **Code Quality & Review:** Verify code quality against `@golang-style.md` to check interface boundaries, error wrapping, and naming.
+5. **Acyclic Design:** Ensure there are no circular imports. Encapsulate domain packages cleanly under `@project-layout.md` and manage concurrent access via `@concurrency.md`.
 
 ---
 
@@ -18,6 +16,8 @@ Refer to the detailed rules below:
 - Directory organization and manual dependency injection: `@project-layout.md`
 - Explicit error handling, wrapping, and custom API errors: `@error-handling.md`
 - Concurrency, goroutine/channel lifecycle, and escape analysis: `@concurrency.md`
+- Scaffolding a business feature (Handler, Service interface, tests): `@golang-feature`
+- Scaffolding repository database operations and models: `@golang-db`
 
 ---
 
@@ -29,8 +29,14 @@ Refer to the detailed rules below:
 
 #### 2. Explicit Error Handling
 - **Check Every Error:** Never ignore returned errors. Write `if err != nil` checks immediately after calling fallible functions.
-- **Wrap Errors:** Use `fmt.Errorf("failed to...: %w", err)` when propagating errors to preserve runtime context.
+- **Wrap Errors:** Use `fmt.Errorf("failed to...: %w", err)` when propagating errors to preserve runtime context. Review details in `@error-handling.md`.
 
 #### 3. Safe Concurrency
 - **Context Propagation:** Pass `ctx context.Context` as the first argument to all functions executing I/O.
 - **Prevent Race Conditions:** Protect shared memory access across goroutines using `sync.Mutex` or `sync/atomic`.
+
+### 🧪 Verification & Testing
+Before completing a task, run the following verification pipeline locally:
+- **Build Validation:** `go build ./...`
+- **Testing:** `go test ./...`
+- **Formatting:** `gofmt -w .`

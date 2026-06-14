@@ -15,13 +15,12 @@ This project is a .NET (C#) application configured as follows:
 ---
 
 ### 🔄 Agent Development Lifecycle
-The AI Agent must execute all .NET tasks following this 5-step workflow:
-1. **Design & Implementation:** Implement business logic adhering to Clean Architecture / Onion Architecture principles. Maintain Core Logic in decoupled Application/Domain layers.
+The AI Agent must execute all .NET tasks following this structured 5-stage lifecycle:
+1. **Design & Code:** Implement business logic adhering to Clean Architecture / Onion Architecture principles. Maintain Core Logic in decoupled Application/Domain layers. Verify layering boundaries in `@api-structure.md`.
 2. **Comprehensive Testing:** Write unit tests for Services using xUnit and Moq.
-3. **Code Quality & Verification:** Run build and test execution commands:
-   - Build Check: `dotnet build`
-   - Test Execution: `dotnet test`
-4. **Package Management:** Add new NuGet dependencies using the command: `dotnet add package [package_name]`.
+3. **Troubleshooting & Debugging:** When debugging dependency resolution issues or validation faults, inspect service lifetime setups.
+4. **Code Quality & Review:** Perform self-review using `@error-handling-validation.md` (for FluentValidation and global exception middleware) and `@dependency-injection.md`. Check styling rules in `@csharp-style.md`.
+5. **Production Readiness:** Verify compilation and execute all unit/integration tests before finalizing changes.
 
 ---
 
@@ -31,7 +30,7 @@ Refer to the detailed rules below:
 - Dependency Injection lifetimes (Transient, Scoped, Singleton) registration: `@dependency-injection.md`
 - API Controller responsibilities and execution dispatch: `@api-structure.md`
 - FluentValidation setups and centralized exception handling middleware: `@error-handling-validation.md`
-- Scaffolding a new API Controller, DTO, and Request Validator: `@SKILL.md`
+- Scaffolding a new API Controller, DTO, and Request Validator: `@dotnet-controller`
 
 ---
 
@@ -51,3 +50,8 @@ Strictly separate concerns across application boundaries:
 #### 3. Validation with FluentValidation
 - Validate all incoming request DTOs using validators inheriting from FluentValidation's `AbstractValidator<T>`.
 - Do not write manual validation statements scattered across Controller methods.
+
+### 🧪 Verification & Testing
+Before completing a task, run the following verification pipeline:
+- **Build Check:** `dotnet build`
+- **Test Execution:** `dotnet test`
