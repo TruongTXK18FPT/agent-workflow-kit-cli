@@ -6,6 +6,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { runInit } from "./commands/init.js";
+import { runUiServer } from "./commands/ui.js";
 import { runAdd } from "./commands/add.js";
 import { runSync } from "./commands/sync.js";
 import { runDoctor } from "./commands/doctor.js";
@@ -22,7 +23,7 @@ export function runCli() {
   program
     .name("agent-workflow-kit")
     .description("Generate AI coding workflows/rules/templates for Codex and Antigravity")
-    .version("1.3.2");
+    .version("1.3.5");
 
   program
     .command("init")
@@ -35,6 +36,19 @@ export function runCli() {
         await runInit(options);
       } catch (err) {
         console.error(chalk.red(`Error running init: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
+
+  program
+    .command("ui")
+    .description("Launch the local configuration wizard web dashboard")
+    .option("-p, --port <port>", "Port to run the UI server on", "4321")
+    .action(async (options) => {
+      try {
+        await runUiServer(options);
+      } catch (err) {
+        console.error(chalk.red(`Error running ui: ${err instanceof Error ? err.message : String(err)}`));
         process.exit(1);
       }
     });
