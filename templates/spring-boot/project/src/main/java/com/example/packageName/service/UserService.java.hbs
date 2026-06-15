@@ -1,0 +1,11 @@
+package com.example.{{safePackageName}}.service;
+
+import com.example.{{safePackageName}}.dto.UserDTO;
+
+import java.util.List;
+
+public interface UserService {
+    List<UserDTO> getAllUsers();
+    UserDTO createUser(UserDTO userDTO);
+    UserDTO getUserById(Long id);
+}

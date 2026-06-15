@@ -1,0 +1,55 @@
+package com.example.{{safePackageName}}.service.impl;
+
+import com.example.{{safePackageName}}.dto.UserDTO;
+import com.example.{{safePackageName}}.entity.User;
+import com.example.{{safePackageName}}.repository.UserRepository;
+import com.example.{{safePackageName}}.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public UserDTO createUser(UserDTO userDTO) {
+        User user = convertToEntity(userDTO);
+        User savedUser = userRepository.save(user);
+        return convertToDTO(savedUser);
+    }
+
+    @Override
+    public UserDTO getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        return convertToDTO(user);
+    }
+
+    private UserDTO convertToDTO(User user) {
+        return UserDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .build();
+    }
+
+    private User convertToEntity(UserDTO userDTO) {
+        return User.builder()
+                .id(userDTO.getId())
+                .name(userDTO.getName())
+                .email(userDTO.getEmail())
+                .build();
+    }
+}

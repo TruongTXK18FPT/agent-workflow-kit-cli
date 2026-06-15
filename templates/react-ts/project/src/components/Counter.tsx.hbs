@@ -1,0 +1,16 @@
+import { useState } from 'react'
+
+export function Counter() {
+  const [count, setCount] = useState(0)
+
+  return (
+    <div className="card">
+      <button className="counter-btn" onClick={() => setCount((c) => c + 1)}>
+        Count is {count}
+      </button>
+      <p className="instruction">
+        Edit <code>src/components/Counter.tsx</code> to test stateful hot updates.
+      </p>
+    </div>
+  )
+}

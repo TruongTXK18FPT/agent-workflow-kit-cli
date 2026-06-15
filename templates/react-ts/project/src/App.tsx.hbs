@@ -1,0 +1,60 @@
+import { useEffect, useState } from 'react'
+import { Counter } from './components/Counter'
+import { ThemeToggle } from './components/ThemeToggle'
+import { fetchSystemStatus, SystemStatus } from './services/api'
+import './styles/App.css'
+
+function App() {
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchSystemStatus()
+      .then((status) => {
+        setSystemStatus(status)
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error('Failed to load system status:', err)
+        setLoading(false)
+      })
+  }, [])
+
+  return (
+    <div className="container">
+      <div className="logo-container">
+        <span className="logo react" style={{ fontSize: '4rem', userSelect: 'none' }}>⚛️</span>
+      </div>
+      
+      <h1 className="title">{{projectName}}</h1>
+      <p className="subtitle">
+        Your AI-Ready React, Vite, and TypeScript project generated with Agent Workflow Kit.
+      </p>
+
+      {/* Standalone Interactive Component */}
+      <Counter />
+
+      {/* Component utilizing custom hooks */}
+      <ThemeToggle />
+
+      {/* Service layer display */}
+      <div className="api-status-card">
+        {loading ? (
+          <span>Loading system API status...</span>
+        ) : systemStatus ? (
+          <div>
+            API Status: <span className="status-badge online">{systemStatus.status}</span> (v{systemStatus.version})
+          </div>
+        ) : (
+          <span>API Status: <span className="status-badge" style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#f87171' }}>OFFLINE</span></span>
+        )}
+      </div>
+
+      <p className="footer">
+        Workflow guidelines and skills are configured in the <code>.agents/</code> directory.
+      </p>
+    </div>
+  )
+}
+
+export default App

@@ -1,0 +1,29 @@
+import { useEffect } from 'react'
+import { useLocalStorage } from '../hooks/useLocalStorage'
+
+export function ThemeToggle() {
+  const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark')
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    if (theme === 'light') {
+      document.body.style.backgroundColor = '#f8fafc'
+      document.body.style.color = '#0f172a'
+    } else {
+      document.body.style.backgroundColor = '#0b0f19'
+      document.body.style.color = '#e2e8f0'
+    }
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
+  }
+
+  return (
+    <div className="theme-toggle-container">
+      <button className="theme-btn" onClick={toggleTheme}>
+        {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+      </button>
+    </div>
+  )
+}

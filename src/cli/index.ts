@@ -6,6 +6,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { runInit } from "./commands/init.js";
+import { runCreate } from "./commands/create.js";
 import { runUiServer } from "./commands/ui.js";
 import { runAdd } from "./commands/add.js";
 import { runSync } from "./commands/sync.js";
@@ -23,7 +24,20 @@ export function runCli() {
   program
     .name("agent-workflow-kit")
     .description("Generate AI coding workflows/rules/templates for Codex and Antigravity")
-    .version("1.3.5");
+    .version("1.3.6");
+
+  program
+    .command("create <template> [projectName]")
+    .description("Bootstrap a new project structure with AI workflow rules pre-configured")
+    .option("--dry-run", "Output actions to console without creating folders", false)
+    .action(async (template, projectName, options) => {
+      try {
+        await runCreate(template, projectName, options);
+      } catch (err) {
+        console.error(chalk.red(`Error running create: ${err instanceof Error ? err.message : String(err)}`));
+        process.exit(1);
+      }
+    });
 
   program
     .command("init")
