@@ -11,6 +11,7 @@ import chalk from "chalk";
 import { exec } from "child_process";
 import { detectProjectModules } from "../../core/detector.js";
 import { runInit } from "./init.js";
+import { runCreate } from "./create.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -160,6 +161,72 @@ export async function runUiServer(options: UiOptions) {
             console.log = originalLog;
             console.warn = originalWarn;
             console.error = originalError;
+          }
+        } catch (err) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid JSON payload" }));
+        }
+      });
+      return;
+    }
+
+    // API - POST /api/create
+    if (pathname === "/api/create" && req.method === "POST") {
+      let body = "";
+      req.on("data", (chunk) => {
+        body += chunk;
+      });
+
+      req.on("end", async () => {
+        try {
+          const config = JSON.parse(body);
+          const template = config.template || "react-ts";
+          const projectName = config.projectName || "my-project";
+          const dryRun = !!config.dryRun;
+
+          const logs: string[] = [];
+          const originalLog = console.log;
+          const originalWarn = console.warn;
+          const originalError = console.error;
+          const originalExit = process.exit;
+          let exitCode: number | null = null;
+
+          // Capture console outputs to send back to the web console UI
+          console.log = (...args) => {
+            logs.push(args.join(" "));
+            originalLog(...args);
+          };
+          console.warn = (...args) => {
+            logs.push("[WARN] " + args.join(" "));
+            originalWarn(...args);
+          };
+          console.error = (...args) => {
+            logs.push("[ERROR] " + args.join(" "));
+            originalError(...args);
+          };
+
+          // @ts-ignore
+          process.exit = (code) => {
+            exitCode = (code === undefined) ? 1 : Number(code);
+            throw new Error(`Process exited with code ${exitCode}`);
+          };
+
+          try {
+            await runCreate(template, projectName, { dryRun });
+            if (exitCode !== null && exitCode !== 0) {
+              throw new Error(`Process exited with code ${exitCode}`);
+            }
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ success: true, logs }));
+          } catch (err) {
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ success: false, error: (err as Error).message, logs }));
+          } finally {
+            // Restore console methods and process exit
+            console.log = originalLog;
+            console.warn = originalWarn;
+            console.error = originalError;
+            process.exit = originalExit;
           }
         } catch (err) {
           res.writeHead(400, { "Content-Type": "application/json" });
